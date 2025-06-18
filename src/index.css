@@ -11,3 +11,82 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding-top: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logout-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 50px;
+}
+
+.big-button {
+  padding: 10px 20px;
+  font-size: 18px;
+  width: 200px;
+}
+
+.navigation-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+
+/* Smaller navigation buttons */
+.nav-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  width: 200px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-button:hover {
+  background-color: #f0f0f0;
+}
+
+.my-leagues-container {
+  padding: 20px;
+  text-align: center;
+}
+
+.my-leagues-container ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.my-leagues-container li {
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+.my-leagues-container p {
+  font-size: 16px;
+  color: #888;
+}
+
+.nav-button {
+  margin-top: 20px;
+}
