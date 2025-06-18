@@ -20,15 +20,23 @@ const Auth = () => {
     setError('');
     setSuccessMessage('');
 
+    /*  const baseURL = process.env.REACT_APP_API_URL;
+    console.log('API base URL:', baseURL);
+    console.log('API base URL:', process.env.REACT_APP_API_URL);
+    console.log('REACT_APP_API_URL from env:', process.env.REACT_APP_API_URL);
+    console.log('All env vars:', process.env); */
+
     try {
+
+
       if (isSignup) {
-        const res = await axios.post('http://localhost:5000/api/signup', {
-          firstName, lastName, gender, email, password,
+        const res = await axios.post('https://pickmint-fb40314ffafe.herokuapp.com/api/signup', {
+        firstName, lastName, gender, email, password,
         });
         setSuccessMessage(res.data.message || 'Signup successful!');
         setIsSignup(false);
       } else {
-        const res = await axios.post('http://localhost:5000/api/login', { email, password });
+        const res = await axios.post('https://pickmint-fb40314ffafe.herokuapp.com/api/login', { email, password });
         localStorage.setItem('token', res.data.token);
         navigate('/home');
       }

@@ -16,7 +16,7 @@ function CreateTeam() {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/leagues');
+        const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/leagues');
         setAvailableLeagues(response.data);
       } catch (err) {
         console.error('Failed to fetch leagues', err);
@@ -38,7 +38,7 @@ function CreateTeam() {
       const email = decoded.email;
 
       const response = await axios.post(
-        'http://localhost:5000/api/create-team',
+        'https://pickmint-fb40314ffafe.herokuapp.com/api/create-team',
         {
           email,
           teamName,

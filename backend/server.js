@@ -262,43 +262,19 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 });
 
 
-
-
-
-
-
-// GET league details by ID
-app.get('/api/leagues/:id', authenticateToken, async (req, res) => {
-  try {
-    const leagueId = req.params.id.trim(); // Trim whitespace/newlines
-    const league = await League.findById(leagueId);
-    if (!league) return res.status(404).json({ message: 'League not found' });
-    res.json({ league });
-  } catch (error) {
-    console.error('Error fetching league by ID:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-
-
-
-
-
 // Get logged-in user's teams
-app.get('/api/user/teams', authenticateToken, async (req, res) => {
+app.get('/api/users/me/teams', authenticateToken, async (req, res) => {
   try {
-    const userEmail = req.user.email;
-    const user = await User.findOne({ username: userEmail });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ teams: user.teams || [] });
-  } catch (error) {
-    console.error('Get user teams error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    const teams = await Team.find({ ownerEmail: req.user.email });
+    res.json({ teams });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+
+
 
 // Create Team
 app.post('/api/create-team', authenticateToken, async (req, res) => {

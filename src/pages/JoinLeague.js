@@ -17,7 +17,7 @@ const JoinLeague = () => {
     }
 
     const response = await axios.post(
-      'http://localhost:5000/api/league/join',
+      'https://pickmint-fb40314ffafe.herokuapp.com/api/league/join',
       { code }, // No need to send userEmail — backend gets it from token
       { headers: { Authorization: `Bearer ${token}` } } // ✅ Add token to headers
     );

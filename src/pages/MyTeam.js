@@ -1,92 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Button from '../components/ui/Button';
-import './MyTeam.css'; // Optional if you want styling
+import './MyTeam.css';
 
-function MyTeams() {
+const MyTeams = () => {
   const [teams, setTeams] = useState([]);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserTeams = async () => {
+    const fetchTeams = async () => {
       try {
         const token = localStorage.getItem('token');
-        console.log('🔑 Token from localStorage:', token);
-
-        if (!token) {
-          setError('No token found. Please log in.');
-          return;
-        }
-
-        const response = await axios.get('http://localhost:5000/api/user/teams', {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/users/me/teams', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log('✅ Teams fetch response:', response.data);
-
-        setTeams(response.data.teams || []);
-        setError(''); // Clear error if successful
+        setTeams(response.data.teams);
+        setLoading(false);
       } catch (err) {
-        // Log full error info
-        console.error('❌ Error fetching teams:', err);
-        if (err.response) {
-          console.error('Response data:', err.response.data);
-          console.error('Response status:', err.response.status);
-          console.error('Response headers:', err.response.headers);
-          setError(`Error fetching teams: ${err.response.data.message || err.message}`);
-        } else if (err.request) {
-          // Request was made but no response received
-          console.error('No response received:', err.request);
-          setError('No response from server. Please try again later.');
-        } else {
-          // Other errors
-          setError(`Request error: ${err.message}`);
-        }
+        setError('Failed to load teams');
+        setLoading(false);
       }
     };
 
-    fetchUserTeams();
+    fetchTeams();
   }, []);
+
+  const handleGoHome = () => {
+    navigate('/home');
+  };
+
+  const handleCreateTeam = () => {
+    navigate('/create-teams');
+  };
 
   return (
     <div className="my-teams-container">
-      <h1>My Teams</h1>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
       <div className="outer-box">
         <div className="group-box">
-          <h2>Teams</h2>
+          <h2>My Teams</h2>
 
-          {teams.length > 0 ? (
-            <div className="team-list">
-              {teams.map((team, index) => (
-                <div key={index} className="team-item">
-                  <div className="team-header">
-                    <span className="team-name">{team.name}</span>
-                    <span className="team-points">{team.points} pts</span>
+          {loading && <p>Loading...</p>}
+          {error && <p>{error}</p>}
+          {!loading && !error && teams.length === 0 && (
+            <p>You are not part of any teams yet.</p>
+          )}
+
+          {!loading && !error && teams.length > 0 && (
+            <div className="teams-box">
+              <h3>Your Teams</h3>
+              <div className="team-list">
+                {teams.map((team, idx) => (
+                  <div key={idx} className="team-item">
+                    <div className="team-header">
+                      <span className="team-name">{team.name}</span>
+                      <span className="team-points">Points: {team.points}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          ) : (
-            <p>You haven't created any teams yet.</p>
           )}
         </div>
       </div>
 
-      <div className="flex gap-4 mt-6">
-        <Button onClick={() => navigate('/create-teams')}>
-          Create Team
-        </Button>
-        <Button onClick={() => navigate('/home')}>
-          Back to Home
-        </Button>
-      </div>
+      {/* Buttons below the container */}
+      <button className="nav-button" onClick={handleCreateTeam}>
+        ➕ Create New Team
+      </button>
+      <button className="nav-button" onClick={handleGoHome}>
+        ⬅ Back to Home
+      </button>
     </div>
   );
-}
+};
 
 export default MyTeams;
