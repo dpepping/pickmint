@@ -1,23 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 
 const CreateLeague = () => {
   const [leagueName, setLeagueName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
   const [code, setCode] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log('Token:', token);  // Check if the token exists
-    if (token) {
-      const decoded = jwtDecode(token);
-      console.log('Decoded Token:', decoded); // Check what you get from decoding
-      setUserEmail(decoded.email);  // Set the email from the decoded token
-    }
-  }, []);  // The empty dependency array ensures this runs only once when the component mounts
 
   // Function to generate a 6-character alphanumeric league code
   const generateLeagueCode = () => {
@@ -30,19 +19,29 @@ const CreateLeague = () => {
   };
 
   const handleCreateLeague = async () => {
-    const generatedCode = generateLeagueCode(); // Generate code here
-    try {
-      const { data } = await axios.post('http://localhost:5000/api/league/create', {
+  const generatedCode = generateLeagueCode(); // Generate code here
+  const token = localStorage.getItem('token'); // Get token from localStorage
+
+  try {
+    const { data } = await axios.post(
+      'http://localhost:5000/api/league/create',
+      {
         name: leagueName,
-        ownerEmail: userEmail,
         code: generatedCode, // Send the generated code to the backend
-      });
-      setCode(generatedCode); // Show the code to the user
-      console.log(data); // You can log the data to see what the response contains
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to create league');
-    }
-  };
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,  // Add the Bearer token here
+        },
+      }
+    );
+    setCode(generatedCode); // Show the code to the user
+    console.log(data); // You can log the data to see what the response contains
+  } catch (error) {
+    alert(error.response?.data?.message || 'Failed to create league');
+  }
+};
+
 
   const handleBack = () => {
     navigate('/home');

@@ -1,0 +1,25 @@
+.create-team-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.team-input {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 1rem;
+}

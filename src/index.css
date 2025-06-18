@@ -90,3 +90,73 @@ code {
 .nav-button {
   margin-top: 20px;
 }
+
+
+.home-container {
+  padding: 2rem;
+  position: relative;
+}
+
+.logout-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.main-split-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem; /* space between left and right */
+  margin-top: 3rem; /* spacing below logout */
+}
+
+.side-container {
+  flex: 1; /* each side takes equal width */
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.side-container h2 {
+  margin-bottom: 1.5rem;
+}
+
+.big-button {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.navigation-buttons {
+  margin-top: 3rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.bottom-buttons-container {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navigation-buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.welcome-back-header {
+  text-align: center;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333; /* adjust color if needed */
+}

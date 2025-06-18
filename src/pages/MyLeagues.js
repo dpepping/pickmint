@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // ✅ correct
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import './MyLeagues.css';
@@ -12,53 +11,32 @@ function MyLeagues() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLeagues = async () => {
-      try {
-        const token = localStorage.getItem('token');
-  
-        if (!token) {
-          setError('No token found');
-          return;
-        }
-  
-        const decoded = jwtDecode(token);
-        const userEmail = decoded.email;
-  
-        const userRes = await axios.get('http://localhost:5000/api/users', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-  
-        const leagueRes = await axios.get('http://localhost:5000/api/leagues', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-  
-        const currentUser = userRes.data.find(user => user.email === userEmail);
-  
-        if (!currentUser) {
-          setError('User not found');
-          return;
-        }
-  
-        // Filter leagues the user is in
-        const userLeagues = leagueRes.data.filter(league =>
-          league.participants.includes(userEmail)
-        );
-  
-        // Optionally attach group size for clarity
-        const leaguesWithSize = userLeagues.map(league => ({
-          ...league,
-          groupSize: league.participants.length,
-        }));
-  
-        setLeagues(leaguesWithSize);
-      } catch (error) {
-        console.error('Error fetching leagues:', error);
-        setError('Error fetching leagues');
-      }
-    };
-  
-    fetchLeagues();
-  }, []);
+  const fetchLeagues = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No token found');
+      return;
+    }
+
+    const res = await axios.get('http://localhost:5000/api/user/leagues', {
+      headers: { Authorization: `Bearer ${token}` }, // Fix the backticks!
+    });
+
+    setLeagues(res.data.leagues || []); // No need for additional mapping
+  } catch (error) {
+    console.error('❌ Error fetching leagues:', error.response ? error.response.data : error);
+    setError('Error fetching leagues');
+  }
+};
+
+
+  fetchLeagues();
+}, []);
+
+
+
+
   
 
   return (
@@ -104,12 +82,12 @@ function MyLeagues() {
                         <span>Bracket Name</span>
                         <span>Points</span>
                       </div>
-                      {league.members?.map((member, idx) => (
+                      {league.teams?.map((team, idx) => (
                         <div key={idx} className="league-stats-row">
-                          <span>{member.rank || 'N/A'}</span>
-                          <span>{member.bracketName || 'N/A'}</span>
-                          <span>{member.points || '0'}</span>
-                        </div>
+                            <span>{team.rank || 'N/A'}</span>
+                            <span>{team.bracketName || 'N/A'}</span>
+                            <span>{team.points || '0'}</span>
+                      </div>
                       ))}
                     </div>
                   </div>

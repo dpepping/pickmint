@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Button from '../components/ui/Button';
-import './CreateBracket.css';
+import './CreateTeams.css';
 import { jwtDecode } from 'jwt-decode';
 
-function CreateBracket() {
-  const [bracketName, setBracketName] = useState('');
+function CreateTeam() {
+  const [teamName, setTeamName] = useState('');
   const [error, setError] = useState('');
   const [selectedLeagueCode, setSelectedLeagueCode] = useState('');
   const [availableLeagues, setAvailableLeagues] = useState([]);
@@ -38,42 +38,42 @@ function CreateBracket() {
       const email = decoded.email;
 
       const response = await axios.post(
-        'http://localhost:5000/api/create-bracket',
+        'http://localhost:5000/api/create-team',
         {
           email,
-          bracketName,
+          teamName,
           leagueCode: selectedLeagueCode || null
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 201 || response.status === 200) {
-        alert('Bracket created successfully!');
-        navigate('/my-brackets');
+        alert('Team created successfully!');
+        navigate('/my-teams');
       } else {
-        setError('Failed to create bracket.');
+        setError('Failed to create team.');
       }
     } catch (err) {
-      console.error('Error creating bracket:', err);
+      console.error('Error creating team:', err);
       setError('Something went wrong.');
     }
   };
 
   return (
-    <div className="create-bracket-container">
-      <h1>Create a Bracket</h1>
+    <div className="create-team-container">
+      <h1>Create a Team</h1>
       {error && <p className="error-message">{error}</p>}
 
       <input
         type="text"
-        placeholder="Bracket Name"
-        value={bracketName}
-        onChange={(e) => setBracketName(e.target.value)}
-        className="bracket-input"
+        placeholder="Team Name"
+        value={teamName}
+        onChange={(e) => setTeamName(e.target.value)}
+        className="team-input"
       />
 
       <select
-        className="bracket-input"
+        className="team-input"
         value={selectedLeagueCode}
         onChange={(e) => setSelectedLeagueCode(e.target.value)}
       >
@@ -87,10 +87,10 @@ function CreateBracket() {
 
       <div className="button-group">
         <Button onClick={handleCreate}>Create</Button>
-        <Button onClick={() => navigate('/my-brackets')}>Back</Button>
+        <Button onClick={() => navigate('/my-team')}>Back</Button>
       </div>
     </div>
   );
 }
 
-export default CreateBracket;
+export default CreateTeam;

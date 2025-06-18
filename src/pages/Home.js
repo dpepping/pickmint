@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate,} from 'react-router-dom';
 import Button from '../components/ui/Button';
 import '../index.css';
 
@@ -14,8 +14,8 @@ function Home() {
     navigate('/my-leagues'); // This will navigate to My Leagues screen
   };
 
-  const handleMyBrackets = () => {
-    navigate('/my-brackets'); // This will navigate to My Brackets screen
+  const handleMyTeam = () => {
+    navigate('/my-team'); // This will navigate to My Brackets screen
   };
 
   return (
@@ -32,22 +32,13 @@ function Home() {
         <Button onClick={handleMyLeagues} className="big-button">My Leagues</Button>
         
         {/* Button for My Brackets */}
-        <Button onClick={handleMyBrackets} className="big-button">My Brackets</Button>
+        <Button onClick={handleMyTeam} className="big-button">My Teams</Button>
 
         {/* Button for Join League */}
         <Button onClick={() => navigate('/join-league')} className="big-button">Join League</Button>
 
         {/* Button for Create New League */}
         <Button variant="outline" onClick={() => navigate('/create-league')} className="big-button">Create New League</Button>
-      </div>
-
-      <div className="navigation-buttons">
-        <Link to="/draft">
-          <Button className="nav-button">Go to Draft</Button>
-        </Link>
-        <Link to="/leaderboard">
-          <Button className="nav-button">Go to Leaderboard</Button>
-        </Link>
       </div>
     </div>
   );
