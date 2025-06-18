@@ -246,56 +246,22 @@ app.get('/api/user/:email', authenticateToken, async (req, res) => {
 });
 
 // Get logged-in user's leagues
-// Get all league details where user is a participant
-app.get('/api/user/leagues', (req, res) => {
-  console.log('📡 /api/user/leagues endpoint hit');
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ message: 'Missing token' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
+app.get('/api/users/me', authenticateToken, async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('✅ Decoded user email:', decoded.email);
+    const userEmail = req.user.email;
+    const user = await User.findOne({ username: userEmail });
 
-    const user = users.find(u => u.email === decoded.email);
-    if (!user) {
-      console.log('❌ No user found for email:', decoded.email);
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const userLeagues = (user.leagues || []).map(({ code }) => {
-      const league = leagues.find(l => l.code === code);
-
-      if (!league) return null;
-
-      // Get brackets associated with this league
-      const leagueBrackets = (brackets || []).filter(b =>
-        (league.brackets || []).includes(b.name)
-      );
-
-      return {
-        name: league.name,
-        code: league.code,
-        participants: league.participants,
-        groupSize: league.participants.length,
-        teams: leagueBrackets.map(b => ({
-          name: b.name,
-          email: b.email,
-          points: b.points || 0 // Optional: calculate or assign points elsewhere
-        }))
-      };
-    }).filter(Boolean); // Remove nulls in case any league isn't found
-
-    return res.json({ leagues: userLeagues });
+    res.json(user);
   } catch (err) {
-    console.error('❌ Token verification error:', err.message);
-    return res.status(401).json({ message: 'Invalid token' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
+
+
 
 
 
