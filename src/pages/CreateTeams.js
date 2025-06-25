@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Button from '../components/ui/Button';
 import './CreateTeams.css';
-import { jwtDecode } from 'jwt-decode';
 
 function CreateTeam() {
   const [teamName, setTeamName] = useState('');
@@ -16,7 +15,8 @@ function CreateTeam() {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/leagues');
+        //const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/leagues');
+        const response = await axios.get('http://localhost:5000/api/leagues');
         setAvailableLeagues(response.data);
       } catch (err) {
         console.error('Failed to fetch leagues', err);
@@ -27,38 +27,37 @@ function CreateTeam() {
   }, []);
 
   const handleCreate = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('You must be logged in.');
-        return;
-      }
-
-      const decoded = jwtDecode(token);
-      const email = decoded.email;
-
-      const response = await axios.post(
-        'https://pickmint-fb40314ffafe.herokuapp.com/api/create-team',
-        {
-          email,
-          teamName,
-          leagueCode: selectedLeagueCode || null
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.status === 201 || response.status === 200) {
-        alert('Team created successfully!');
-        navigate('/my-teams');
-      } else {
-        setError('Failed to create team.');
-      }
-    } catch (err) {
-      console.error('Error creating team:', err);
-      setError('Something went wrong.');
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('You must be logged in.');
+      return;
     }
-  };
 
+    const response = await axios.post(
+      'http://localhost:5000/api/create-team',
+      {
+        teamName,
+        leagueCode: selectedLeagueCode || null
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (response.status === 201 || response.status === 200) {
+      alert('Team created successfully!');
+      navigate('/my-team');
+    } else {
+      setError('Failed to create team.');
+    }
+  } catch (err) {
+    console.error('Error creating team:', err);
+    setError('Something went wrong.');
+  }
+};
+
+
+
+  //'https://pickmint-fb40314ffafe.herokuapp.com/api/create-team',
   return (
     <div className="create-team-container">
       <h1>Create a Team</h1>

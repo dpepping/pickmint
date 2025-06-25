@@ -9,6 +9,10 @@ import CreateLeague from './pages/CreateLeague';
 import JoinLeague from './pages/JoinLeague';
 import LeagueDetails from './pages/LeagueDetails';
 import CreateTeams from './pages/CreateTeams';
+import TeamDetails from './pages/TeamDetails'; // adjust path if needed
+import TeamDetailsInLeague from './pages/TeamDetailsInLeague';
+
+
 
 
 
@@ -27,6 +31,8 @@ function App() {
         <Route path="/join-league" element={<JoinLeague />} />
         <Route path="/league/:leagueCode" element={<LeagueDetails />} />
         <Route path="/create-teams" element={<CreateTeams />} />
+        <Route path="/team/:id" element={<TeamDetails />} />
+        <Route path="/league/:leagueCode/team/:teamId" element={<TeamDetailsInLeague />} />
 
       </Routes>
     </Router>

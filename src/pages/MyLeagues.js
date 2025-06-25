@@ -13,7 +13,8 @@ const MyLeagues = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/users/me', {
+        //const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/users/me', {
+        const response = await axios.get('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(response.data);
@@ -48,16 +49,22 @@ const MyLeagues = () => {
               <h3>Your Leagues</h3>
               <div className="league-list">
                 {user.leagues.map((league, idx) => (
-                  <div key={idx} className="league-item">
-                    <div className="league-header">
-                      <span className="league-name">{league.name}</span>
-                      <span className="league-code">Code: {league.code}</span>
-                    </div>
-                    {league.groupSize && (
-                      <div className="group-size">Group Size: {league.groupSize}</div>
-                    )}
-                  </div>
-                ))}
+  <div 
+    key={idx} 
+    className="league-item" 
+    style={{ cursor: 'pointer' }} 
+    onClick={() => navigate(`/league/${league.code}`)}
+  >
+    <div className="league-header">
+      <span className="league-name">{league.name}</span>
+      <span className="league-code">Code: {league.code}</span>
+    </div>
+    {league.groupSize && (
+      <div className="group-size">Group Size: {league.groupSize}</div>
+    )}
+  </div>
+))}
+
               </div>
             </div>
           )}

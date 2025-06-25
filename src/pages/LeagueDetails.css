@@ -1,0 +1,166 @@
+.league-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.league-box {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.15);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.league-title {
+  font-size: 28px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.league-info {
+  font-size: 16px;
+  margin: 5px 0;
+  color: #555;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.tab {
+  padding: 8px 16px;
+  margin: 0 5px;
+  background: #f1f1f1;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.tab.active, .tab:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.results-table {
+  margin-top: 15px;
+  border-top: 1px solid #ccc;
+}
+
+.table-header, .table-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.table-header {
+  font-weight: bold;
+  background: #f9f9f9;
+}
+
+.table-row.empty {
+  text-align: center;
+  color: #999;
+}
+
+.back-btn {
+  margin-top: 20px;
+}
+
+.error-text {
+  color: red;
+  font-weight: bold;
+}
+
+
+.back-btn {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 24px;
+  background-color: #4caf50;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  user-select: none;
+  text-align: center;
+  font-size: 16px;
+}
+
+.back-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+.participants-title {
+  margin-top: 20px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.participants-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 8px;
+}
+
+.participant-email {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  color: #555;
+}
+
+.no-participants {
+  font-style: italic;
+  color: #999;
+  margin-top: 4px;
+}
+
+.participants-title {
+  margin-top: 20px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.participants-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 8px;
+}
+
+.participant-item {
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.participant-name {
+  font-weight: 500;
+  color: #444;
+}
+
+.participant-team {
+  color: #666;
+  font-style: italic;
+}
+
+.no-participants {
+  font-style: italic;
+  color: #999;
+  margin-top: 4px;
+}

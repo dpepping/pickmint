@@ -13,7 +13,7 @@ const MyTeams = () => {
     const fetchTeams = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/users/me/teams', {
+        const response = await axios.get('http://localhost:5000/api/users/me/teams', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTeams(response.data.teams);
@@ -44,7 +44,7 @@ const MyTeams = () => {
           {loading && <p>Loading...</p>}
           {error && <p>{error}</p>}
           {!loading && !error && teams.length === 0 && (
-            <p>You are not part of any teams yet.</p>
+            <p>You have not created any teams yet.</p>
           )}
 
           {!loading && !error && teams.length > 0 && (
@@ -52,7 +52,11 @@ const MyTeams = () => {
               <h3>Your Teams</h3>
               <div className="team-list">
                 {teams.map((team, idx) => (
-                  <div key={idx} className="team-item">
+                  <div
+                    key={idx}
+                    className="team-item clickable"
+                    onClick={() => navigate(`/team/${team._id}`)}
+                  >
                     <div className="team-header">
                       <span className="team-name">{team.name}</span>
                       <span className="team-points">Points: {team.points}</span>

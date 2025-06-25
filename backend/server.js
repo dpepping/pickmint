@@ -155,32 +155,42 @@ app.get('/api/league', authenticateToken, async (req, res) => {
     }
 
     const league = await League.findOne({ code });
-    if (!league) {
-      return res.status(404).json({ message: 'League not found' });
-    }
+    if (!league) return res.status(404).json({ message: 'League not found' });
 
-    // For simplicity, groupType and groupPassword are static here, customize as needed
-    const groupType = 'private';
-    const groupPassword = null;
+    const leagueTeams = await Team.find({ leagueCodes: code });
 
-    // Populate teams array from Team collection instead of embedded (optional)
-    const leagueTeams = await Team.find({ leagueCode: code });
+    const participantsDetailed = await Promise.all(
+      league.participants.map(async (email) => {
+        const user = await User.findOne({ username: email });
+        const userTeams = leagueTeams.filter(t => t.ownerEmail === email);
+
+        return {
+          email,
+          firstName: user?.firstName || '',
+          lastName: user?.lastName || '',
+          teams: userTeams.map(t => ({
+            name: t.name,
+            points: t.points
+          }))
+        };
+      })
+    );
 
     res.json({
       name: league.name,
       code: league.code,
       owner: league.owner,
       groupSize: league.participants.length,
-      groupType,
-      groupPassword,
-      participants: league.participants,
-      teams: leagueTeams.map(t => ({ name: t.name, owner: t.ownerEmail, points: t.points })),
+      groupType: 'private',
+      groupPassword: null,
+      participants: participantsDetailed,
     });
   } catch (error) {
     console.error('Get league error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // Join League
 app.post('/api/league/join', authenticateToken, async (req, res) => {
@@ -282,8 +292,8 @@ app.post('/api/create-team', authenticateToken, async (req, res) => {
     const { teamName, leagueCode } = req.body;
     const ownerEmail = req.user.email;
 
-    if (!teamName || !leagueCode) {
-      return res.status(400).json({ message: 'Team name and league code are required' });
+    if (!teamName) {
+      return res.status(400).json({ message: 'Team name is required' });
     }
 
     const user = await User.findOne({ username: ownerEmail });
@@ -291,27 +301,27 @@ app.post('/api/create-team', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const league = await League.findOne({ code: leagueCode });
-    if (!league) {
-      return res.status(404).json({ message: 'League not found' });
-    }
-
     // Create team document
     const newTeam = new Team({
       name: teamName,
       ownerEmail,
-      leagueCode,
+      leagueCode: leagueCode || null,
       points: 0,
     });
     await newTeam.save();
 
     // Update user's teams
-    user.teams.push({ name: teamName, points: 0 });
+    user.teams.push({ name: teamName, points: 0, _id: newTeam._id, leagueCode: leagueCode || null });
     await user.save();
 
-    // Update league's teams array
-    league.teams.push({ name: teamName, owner: ownerEmail });
-    await league.save();
+    // If leagueCode provided, add team to league
+    if (leagueCode) {
+      const league = await League.findOne({ code: leagueCode });
+      if (league) {
+        league.teams.push({ name: teamName, owner: ownerEmail });
+        await league.save();
+      }
+    }
 
     res.status(201).json({ message: 'Team created successfully', team: newTeam });
   } catch (error) {
@@ -319,6 +329,7 @@ app.post('/api/create-team', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // Get all teams (debug)
 app.get('/api/teams', authenticateToken, async (req, res) => {
@@ -330,6 +341,150 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+app.get('/api/team/:id', authenticateToken, async (req, res) => {
+  try {
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ message: 'Team not found' });
+
+    res.json({
+      name: team.name,
+      ownerEmail: team.ownerEmail,
+      leagueCodes: team.leagueCodes, // Return array of leagues
+      points: team.points,
+    });
+  } catch (err) {
+    console.error('Team details error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+app.post('/api/add-team-to-league', authenticateToken, async (req, res) => {
+  try {
+    const { teamId, leagueCode } = req.body;
+
+    const team = await Team.findById(teamId);
+    const league = await League.findOne({ code: leagueCode });
+
+    if (!team || !league) return res.status(404).json({ message: 'Team or League not found' });
+
+    // Prevent duplicate leagueCode in team
+    if (!team.leagueCodes.includes(leagueCode)) {
+      team.leagueCodes.push(leagueCode);
+      await team.save();
+    }
+
+    // Prevent duplicate team in league
+    const alreadyInLeague = league.teams.some(t => t.name === team.name && t.owner === team.ownerEmail);
+    if (!alreadyInLeague) {
+      league.teams.push({ name: team.name, owner: team.ownerEmail });
+      await league.save();
+    }
+
+    res.json({ message: 'Team added to league successfully' });
+  } catch (err) {
+    console.error('Add team to league error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// DELETE PATHS
+
+// Delete a team entirely
+app.delete('/api/team/:id', authenticateToken, async (req, res) => {
+  try {
+    const teamId = req.params.id;
+    const team = await Team.findById(teamId);
+    if (!team) return res.status(404).json({ message: 'Team not found' });
+
+    // Remove this team from all leagues it belongs to
+    if (team.leagueCodes && team.leagueCodes.length > 0) {
+      await League.updateMany(
+        { code: { $in: team.leagueCodes } },
+        { $pull: { teams: { name: team.name, owner: team.ownerEmail } } }
+      );
+    }
+
+    // Remove from user's teams array
+    await User.updateOne(
+      { username: team.ownerEmail },
+      { $pull: { teams: { _id: team._id } } }
+    );
+
+    // Delete the team document
+    await Team.deleteOne({ _id: teamId });
+
+    res.json({ message: 'Team deleted successfully' });
+  } catch (err) {
+    console.error('Delete team error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete a league entirely
+app.delete('/api/league/:code', authenticateToken, async (req, res) => {
+  try {
+    const code = req.params.code;
+    const league = await League.findOne({ code });
+    if (!league) return res.status(404).json({ message: 'League not found' });
+
+    // Delete the league document
+    await League.deleteOne({ code });
+
+    // Remove this league from all users' leagues arrays
+    await User.updateMany(
+      { 'leagues.code': code },
+      { $pull: { leagues: { code } } }
+    );
+
+    // Remove this league from all teams' leagueCodes arrays
+    await Team.updateMany(
+      { leagueCodes: code },
+      { $pull: { leagueCodes: code } }
+    );
+
+    // Also remove these teams from the league's teams array is automatic because league doc is deleted
+
+    res.json({ message: 'League deleted successfully' });
+  } catch (err) {
+    console.error('Delete league error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Remove a team from a league
+app.post('/api/remove-team-from-league', authenticateToken, async (req, res) => {
+  try {
+    const { teamId, leagueCode } = req.body;
+    if (!teamId || !leagueCode) {
+      return res.status(400).json({ message: 'Team ID and league code are required' });
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) return res.status(404).json({ message: 'Team not found' });
+
+    const league = await League.findOne({ code: leagueCode });
+    if (!league) return res.status(404).json({ message: 'League not found' });
+
+    // Remove the leagueCode from the team's leagueCodes array
+    team.leagueCodes = team.leagueCodes.filter(code => code !== leagueCode);
+    await team.save();
+
+    // Remove the team from the league's teams array
+    league.teams = league.teams.filter(t => !(t.name === team.name && t.owner === team.ownerEmail));
+    await league.save();
+
+    // Optional: update the user's teams array leagueCode field if stored there (not shown in your current schema)
+
+    res.json({ message: 'Team removed from league successfully' });
+  } catch (err) {
+    console.error('Remove team from league error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 app.get('/', (req, res) => {
   res.send('✅ PickMint backend is running!');

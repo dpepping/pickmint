@@ -24,7 +24,8 @@ const CreateLeague = () => {
 
   try {
     const { data } = await axios.post(
-      'https://pickmint-fb40314ffafe.herokuapp.com/api/league/create',
+      //'https://pickmint-fb40314ffafe.herokuapp.com/api/league/create',
+      'http://localhost:5000/api/league/create',
       {
         name: leagueName,
         code: generatedCode, // Send the generated code to the backend
