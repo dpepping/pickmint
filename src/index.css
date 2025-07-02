@@ -160,3 +160,20 @@ code {
   font-weight: bold;
   color: #333; /* adjust color if needed */
 }
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.standings-table th, .standings-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.standings-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}

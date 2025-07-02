@@ -11,7 +11,9 @@ import LeagueDetails from './pages/LeagueDetails';
 import CreateTeams from './pages/CreateTeams';
 import TeamDetails from './pages/TeamDetails'; // adjust path if needed
 import TeamDetailsInLeague from './pages/TeamDetailsInLeague';
-
+import Standings from './pages/Standings';
+import LiveGame from './pages/LiveGame';
+import DraftPage from './pages/DraftPage';
 
 
 
@@ -33,6 +35,9 @@ function App() {
         <Route path="/create-teams" element={<CreateTeams />} />
         <Route path="/team/:id" element={<TeamDetails />} />
         <Route path="/league/:leagueCode/team/:teamId" element={<TeamDetailsInLeague />} />
+        <Route path="/standings" element={<Standings />} />
+        <Route path="/live-game/:gameId" element={<LiveGame />} />
+        <Route path="/draftpage" element={<DraftPage />} />
 
       </Routes>
     </Router>

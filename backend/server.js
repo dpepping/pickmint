@@ -10,11 +10,16 @@ const User = require('./models/User');
 const League = require('./models/League');
 const Team = require('./models/Team');
 
+const soccerRoutes = require('./Soccer'); // Adjust path if needed
+
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(soccerRoutes);
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -169,6 +174,7 @@ app.get('/api/league', authenticateToken, async (req, res) => {
           firstName: user?.firstName || '',
           lastName: user?.lastName || '',
           teams: userTeams.map(t => ({
+            _id: t._id,
             name: t.name,
             points: t.points
           }))
@@ -184,6 +190,7 @@ app.get('/api/league', authenticateToken, async (req, res) => {
       groupType: 'private',
       groupPassword: null,
       participants: participantsDetailed,
+      draftTime: league.draftTime || null,  // Add this line
     });
   } catch (error) {
     console.error('Get league error:', error);
@@ -264,12 +271,29 @@ app.get('/api/users/me', authenticateToken, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.json(user);
+    // Populate leagues with draftTime and groupSize
+    const enrichedLeagues = await Promise.all(
+      user.leagues.map(async (league) => {
+        const fullLeague = await League.findOne({ code: league.code });
+
+        return {
+          ...league._doc,  // league has name and code from user.leagues array
+          draftTime: fullLeague?.draftTime || null,
+          groupSize: fullLeague?.participants?.length || 0,
+        };
+      })
+    );
+
+    res.json({
+      ...user._doc,
+      leagues: enrichedLeagues,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
+
 
 
 // Get logged-in user's teams
@@ -484,6 +508,26 @@ app.post('/api/remove-team-from-league', authenticateToken, async (req, res) => 
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+app.post('/api/league/:code/schedule-draft', authenticateToken, async (req, res) => {
+  const { draftTime } = req.body;
+  const userEmail = req.user.email;
+
+  try {
+    const league = await League.findOne({ code: req.params.code });
+    if (!league) return res.status(404).json({ message: 'League not found' });
+    if (league.owner !== userEmail) return res.status(403).json({ message: 'Only the creator can schedule the draft' });
+
+    league.draftTime = draftTime;
+    await league.save();
+    res.json({ message: 'Draft scheduled' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 
 app.get('/', (req, res) => {

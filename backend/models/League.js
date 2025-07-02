@@ -11,6 +11,7 @@ const leagueSchema = new mongoose.Schema({
   owner: { type: String, required: true }, // email of league owner
   participants: [String], // array of participant emails
   teams: [leagueTeamSchema],
+  draftTime: { type: Date },  // <== Add this if missing
 });
 
 module.exports = mongoose.model('League', leagueSchema);

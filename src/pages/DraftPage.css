@@ -1,0 +1,92 @@
+/* Container for the whole page */
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #222;
+}
+
+/* Title */
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #0052cc;
+  text-shadow: 1px 1px 2px #aaa;
+}
+
+/* Each team box */
+.team {
+  background-color: #f0f4ff;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease;
+}
+
+.team:hover {
+  background-color: #e1e9ff;
+}
+
+/* Team name styling */
+.team-name {
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  color: #003d99;
+  border-bottom: 2px solid #003d99;
+  padding-bottom: 0.3rem;
+}
+
+/* Player list */
+.player-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* Each player item */
+.player-item {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Player name styling */
+.player-name {
+  font-weight: 600;
+  color: #222;
+  flex: 1 1 200px;
+}
+
+/* Player stats container */
+.player-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  font-size: 0.9rem;
+  color: #555;
+  flex: 2 1 400px;
+}
+
+/* Individual stat */
+.player-stats span {
+  background-color: #dbe7ff;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+}
+
+/* Loading and error text */
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #0073e6;
+}
+
+.error {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #cc0000;
+}

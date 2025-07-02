@@ -55,6 +55,7 @@ const MyTeams = () => {
                   <div
                     key={idx}
                     className="team-item clickable"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => navigate(`/team/${team._id}`)}
                   >
                     <div className="team-header">
