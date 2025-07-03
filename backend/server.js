@@ -5,10 +5,12 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const router = express.Router();
 
 const User = require('./models/User');
 const League = require('./models/League');
 const Team = require('./models/Team');
+const Player = require('./models/Players');
 
 const soccerRoutes = require('./Soccer'); // Adjust path if needed
 
@@ -366,6 +368,38 @@ app.get('/api/teams', authenticateToken, async (req, res) => {
   }
 });
 
+//get all teams of user per league (there should only ever be one team returned)
+app.get('/draft-page/:code',authenticateToken,async(req,res)=>{
+
+  const ownerEmail = req.user.email;
+
+  const league_code = req.params.code
+
+  console.log(league_code)
+
+  const user = await User.findOne({ username: ownerEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+  }
+
+  //const league_team = await User.findOne({leagues:})
+
+
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/team/:id', authenticateToken, async (req, res) => {
   try {
     const team = await Team.findById(req.params.id);
@@ -388,19 +422,37 @@ app.post('/api/add-team-to-league', authenticateToken, async (req, res) => {
   try {
     const { teamId, leagueCode } = req.body;
 
+    console.log("Received leagueCode:", leagueCode);
+
     const team = await Team.findById(teamId);
     const league = await League.findOne({ code: leagueCode });
 
-    if (!team || !league) return res.status(404).json({ message: 'Team or League not found' });
+    if (!team || !league) {
+      return res.status(404).json({ message: 'Team or League not found' });
+    }
 
-    // Prevent duplicate leagueCode in team
-    if (!team.leagueCodes.includes(leagueCode)) {
+    // Initialize leagueCodes if undefined
+    if (!Array.isArray(team.leagueCodes)) {
+      team.leagueCodes = [];
+    }
+
+    // Prevent duplicates
+    const alreadyInTeam = team.leagueCodes.includes(leagueCode);
+
+    if (!alreadyInTeam) {
       team.leagueCodes.push(leagueCode);
       await team.save();
     }
 
-    // Prevent duplicate team in league
-    const alreadyInLeague = league.teams.some(t => t.name === team.name && t.owner === team.ownerEmail);
+    // Initialize league.teams if undefined
+    if (!Array.isArray(league.teams)) {
+      league.teams = [];
+    }
+
+    const alreadyInLeague = league.teams.some(
+      (t) => t.name === team.name && t.owner === team.ownerEmail
+    );
+
     if (!alreadyInLeague) {
       league.teams.push({ name: team.name, owner: team.ownerEmail });
       await league.save();
@@ -412,6 +464,9 @@ app.post('/api/add-team-to-league', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+
 
 
 // DELETE PATHS
@@ -526,6 +581,91 @@ app.post('/api/league/:code/schedule-draft', authenticateToken, async (req, res)
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// GET all players
+router.get('/api/players', async (req, res) => {
+  try {
+    const players = await Player.find();
+    res.json(players);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+//const playerRoutes = require('./playerRoutes');
+//app.use(playerRoutes);
+
+
+//Creating players
+//Creating players
+app.post('/api/team/:teamId/draft-player', authenticateToken, async (req, res) => {
+  try {
+    console.log('Draft Player body:', req.body);
+    
+
+    const ownerEmail = req.user.email;
+    const { teamId } = req.params;
+    const { name, PlayerID, leagueCode } = req.body;
+
+if (!PlayerID || !name || !leagueCode) {
+  return res.status(400).json({ message: 'PlayerID, name, and leagueCode required' });
+}
+
+
+    console.log('Received name:', name, '| PlayerID:', PlayerID);
+
+    if (!PlayerID || !name) {
+      console.log('⚠️ Missing required fields');
+      return res.status(400).json({ message: 'PlayerID and name required' });
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) return res.status(404).json({ message: 'Team not found' });
+    if (team.ownerEmail !== ownerEmail) return res.status(403).json({ message: 'Not authorized' });
+    if (team.leagueCode !== leagueCode) return res.status(400).json({ message: 'Team not in this league' });
+
+    const league = await League.findOne({ code: leagueCode });
+    if (!league) return res.status(404).json({ message: 'League not found' });
+
+    let player = await Player.findOne({ PlayerID });
+    if (!player) {
+      player = new Player({ name, PlayerID });
+      await player.save();
+    }
+
+    const alreadyDraftedInLeague = league.playersDrafted.some(
+      p => p.playerId.toString() === player._id.toString()
+    );
+    if (alreadyDraftedInLeague) {
+      return res.status(400).json({ message: 'Player already drafted in this league' });
+    }
+
+    // Add player to user's team
+    team.players.push({
+      playerId: player._id,
+      name: player.name,
+      draftedAt: new Date(),
+    });
+    await team.save();
+
+    // Track player as drafted in the league
+    league.playersDrafted.push({
+      playerId: player._id,
+      name: player.name,
+    });
+    await league.save();
+
+    res.json({ message: 'Player drafted successfully', player, team, league });
+  } catch (error) {
+    console.error('Draft player error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
+
 
 
 

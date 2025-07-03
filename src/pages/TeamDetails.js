@@ -47,6 +47,27 @@ const TeamDetails = () => {
     fetchTeam();
   }, [id]);
 
+  const handleDeleteTeam = async () => {
+  if (!window.confirm('Are you sure you want to delete this team?')) return;
+
+  try {
+    const token = localStorage.getItem('token');
+    await axios.delete(`http://localhost:5000/api/team/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setMessage('Team deleted successfully');
+    
+    // Redirect back to My Teams after short delay
+    setTimeout(() => navigate('/my-team'), 1000);
+
+  } catch (err) {
+    console.error('Error deleting team:', err);
+    setError(err.response?.data?.message || 'Failed to delete team');
+  }
+};
+
+
   const handleAddToLeague = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -138,6 +159,12 @@ const TeamDetails = () => {
           />
           <Button onClick={handleAddToLeague}>Add</Button>
         </div>
+
+        <div className="delete-team-section">
+  <h3>Danger Zone</h3>
+  <Button onClick={handleDeleteTeam} className="delete-btn">Delete Team</Button>
+</div>
+
 
         {message && <p className="success-message">{message}</p>}
       </div>

@@ -1,57 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import './DraftPage.css';  // Import the CSS file
+import axios from 'axios';
+import './DraftPage.css';
 
 function TeamsWithPlayers() {
   const [teamsWithPlayers, setTeamsWithPlayers] = useState({});
   const [topPlayers, setTopPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [creatingPlayerId, setCreatingPlayerId] = useState(null);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [userTeams, setUserTeams] = useState([]); // store user's teams
 
-  const PLAYER_STATS_API = 'https://api.sportsdata.io/v4/soccer/stats/json/PlayerSeasonStats/75/2025?key=a092451ea8284793906cb7d7cd8a334d';
+  // Fetch user's teams on mount
+  useEffect(() => {
+    async function fetchUserTeams() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('You must be logged in.');
+          setLoading(false);
+          return;
+        }
+        const res = await axios.get('http://localhost:5000/api/users/me/teams', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUserTeams(res.data.teams || []);
+      } catch (err) {
+        console.error('Failed to fetch user teams:', err);
+        setError('Failed to fetch user teams.');
+      }
+    }
+    fetchUserTeams();
+  }, []);
 
+  // Fetch players from external API (unchanged)
   useEffect(() => {
     async function fetchData() {
       try {
+        const API_KEY = 'c633d833084c488e8606ed07120d30b3';
+        const PLAYER_STATS_API = `https://api.sportsdata.io/v3/cbb/stats/json/PlayerSeasonStats/2025?key=${API_KEY}`;
         const res = await fetch(PLAYER_STATS_API);
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-
         const data = await res.json();
 
-        const playerSeasons = data[0]?.PlayerSeasons || [];
+        if (!data || !Array.isArray(data)) {
+          throw new Error('Invalid data format received.');
+        }
 
-        // Group players by team as before
-        const grouped = playerSeasons.reduce((acc, player) => {
-          if (!player.Team) return acc;
-
-          if (!acc[player.Team]) acc[player.Team] = [];
-          acc[player.Team].push({
+        // Group players by team (optional)
+        const grouped = data.reduce((acc, player) => {
+          const team = player.Team || 'Unknown';
+          if (!acc[team]) acc[team] = [];
+          acc[team].push({
             name: player.Name,
             position: player.Position,
             fantasyPoints: player.FantasyPoints,
-            goals: player.Goals,
+            games: player.Games,
+            points: player.Points,
+            rebounds: player.Rebounds,
             assists: player.Assists,
-            tackles: player.Tackles,
-            saves: player.GoalkeeperSaves,
-            passes: player.Passes,
+            steals: player.Steals,
+            blocks: player.BlockedShots,
+            PlayerID: player.PlayerID,
           });
           return acc;
         }, {});
 
-        // Calculate top 10 players overall (sorted descending by fantasyPoints)
-        const sortedTop10 = playerSeasons
+        // Top 10 players overall
+        const sortedTop10 = data
           .filter(p => p.FantasyPoints != null)
           .sort((a, b) => b.FantasyPoints - a.FantasyPoints)
           .slice(0, 10)
           .map(p => ({
             name: p.Name,
+            PlayerID: p.PlayerID,
             team: p.Team,
             position: p.Position,
             fantasyPoints: p.FantasyPoints,
-            goals: p.Goals,
+            games: p.Games,
+            points: p.Points,
+            rebounds: p.Rebounds,
             assists: p.Assists,
-            tackles: p.Tackles,
-            saves: p.GoalkeeperSaves,
-            passes: p.Passes,
+            steals: p.Steals,
+            blocks: p.BlockedShots,
           }));
 
         setTeamsWithPlayers(grouped);
@@ -63,48 +94,79 @@ function TeamsWithPlayers() {
         setLoading(false);
       }
     }
-
     fetchData();
   }, []);
+
+  // Function to draft player to a team
+  async function createPlayer(name, PlayerID) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    setError('You must be logged in.');
+    return;
+  }
+  if (userTeams.length === 0) {
+    setError('You have no teams to draft players to.');
+    return;
+  }
+  setError('');
+  setSuccessMsg('');
+  setCreatingPlayerId(PlayerID);
+
+  const teamId = userTeams[0]._id;
+  const leagueCode = userTeams[0].leagueCodes[0];  // Assuming leagueCodes is an array
+
+  try {
+    const res = await axios.post(
+      `http://localhost:5000/api/team/${teamId}/draft-player`,
+      { name, PlayerID, leagueCode },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log('✅ Player drafted:', res.data);
+    setSuccessMsg(`Player "${name}" drafted successfully!`);
+  } catch (err) {
+    console.error('❌ Failed to draft player:', err);
+    setError('Failed to draft player. Try again.');
+  } finally {
+    setCreatingPlayerId(null);
+  }
+}
+
 
   if (loading) return <p className="loading">Loading player stats...</p>;
   if (error) return <p className="error">{error}</p>;
 
   return (
     <div className="container">
-      <h1>Top 10 Players by Fantasy Points</h1>
+      <h1>🏀 Players by Fantasy Points</h1>
+
+      {successMsg && <p className="success-message">{successMsg}</p>}
+      {error && <p className="error-message">{error}</p>}
+
       <ol className="top-player-list">
         {topPlayers.map((p, i) => (
           <li key={i} className="top-player-item">
-            <strong>{i + 1}.</strong> {p.name} ({p.position}) — {p.team} — Fantasy Points: {p.fantasyPoints.toFixed(1)}
+            {p.name} ({p.position}) — {p.team}
+            <button
+              disabled={creatingPlayerId === p.PlayerID}
+              onClick={() => createPlayer(p.name, p.PlayerID)}
+            >
+              {creatingPlayerId === p.PlayerID ? 'Drafting...' : 'Draft Player'}
+            </button>
+
+            <div className="player-stats">
+              <span>Fantasy Points: {p.fantasyPoints}</span>
+              <span>Games: {p.games}</span>
+              <span>Points: {p.points}</span>
+              <span>Rebounds: {p.rebounds}</span>
+              <span>Assists: {p.assists}</span>
+              <span>Steals: {p.steals}</span>
+              <span>Blocks: {p.blocks}</span>
+              <span>PlayerID: {p.PlayerID}</span>
+            </div>
           </li>
         ))}
       </ol>
-
-      <h1>Player Stats by Team</h1>
-      {Object.entries(teamsWithPlayers).map(([team, players]) => (
-        <div key={team} className="team">
-          <h2 className="team-name">{team}</h2>
-          <ul className="player-list">
-            {players
-              .slice() // create a shallow copy so we don’t mutate original
-              .sort((a, b) => (b.fantasyPoints || 0) - (a.fantasyPoints || 0)) // sort descending
-              .map((p, i) => (
-                <li key={i} className="player-item">
-                  <div className="player-name">{p.name} ({p.position})</div>
-                  <div className="player-stats">
-                    <span>Fantasy Points: {p.fantasyPoints}</span>
-                    <span>Goals: {p.goals}</span>
-                    <span>Assists: {p.assists}</span>
-                    <span>Tackles: {p.tackles}</span>
-                    <span>Saves: {p.saves}</span>
-                    <span>Passes: {p.passes}</span>
-                  </div>
-                </li>
-              ))}
-          </ul>
-        </div>
-      ))}
     </div>
   );
 }

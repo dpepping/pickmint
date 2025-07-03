@@ -133,7 +133,7 @@ function LeagueDetails() {
         {/* ENTER DRAFT BUTTON */}
         {showEnterDraft && (
           <button
-            onClick={() => navigate('/draftpage')}
+            onClick={() => navigate('/draftpage/'+leagueCode)}
             style={{
               padding: '1rem',
               marginBottom: '1rem',

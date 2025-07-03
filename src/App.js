@@ -37,7 +37,7 @@ function App() {
         <Route path="/league/:leagueCode/team/:teamId" element={<TeamDetailsInLeague />} />
         <Route path="/standings" element={<Standings />} />
         <Route path="/live-game/:gameId" element={<LiveGame />} />
-        <Route path="/draftpage" element={<DraftPage />} />
+        <Route path="/draftpage/:leagueCode" element={<DraftPage />} />
 
       </Routes>
     </Router>
