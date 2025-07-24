@@ -9,6 +9,7 @@
   border-radius: 10px;
   padding: 20px;
   background-color: #f8f8f8;
+  width: 65rem
 }
 
 .group-box {
@@ -105,8 +106,492 @@
   text-align: center;
   border-radius: 5px;
   text-decoration: none;
+  margin-bottom: 2rem;
 }
 
 .nav-button:hover {
   background-color: #555;
 }
+
+        /* Basic Reset & Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; /* Or your chosen font */
+            background-color: #f4f7f6; /* Light background for a modern feel */
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 1. Top Navigation Bar */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            z-index: 1000; /* Ensure it stays on top */
+        }
+
+        .top-navbar .logo h1 {
+            font-size: 1.8rem;
+            color: #2c3e50; /* A dark, professional color */
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .search-bar {
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            overflow: hidden;
+            background-color: #f9f9f9;
+        }
+
+        .search-bar input {
+            border: none;
+            padding: 0.5rem 1rem;
+            outline: none;
+            background: transparent;
+        }
+
+        .search-bar button {
+            background-color: transparent;
+            border: none;
+            padding: 0.5rem 0.8rem;
+            cursor: pointer;
+            color: #777;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .user-profile .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #eee;
+        }
+
+        .logout-btn { /* Style this as a subtle link or button */
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .logout-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1; /* Allows it to take remaining vertical space */
+        }
+
+        /* 2. Sidebar Navigation */
+        .sidebar {
+            width: 250px; /* Fixed width, or use percentage/flex-basis */
+            background-color: #2c3e50; /* Darker sidebar for contrast */
+            color: #ecf0f1; /* Light text for readability */
+            padding: 2rem 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+        }
+
+        .sidebar nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-left: 5px solid transparent; /* For active indicator */
+        }
+
+        .sidebar .nav-item:hover,
+        .sidebar .nav-item.active {
+            background-color: #34495e; /* Slightly lighter dark on hover/active */
+            border-left-color: #2ecc71; /* Accent color for active state */
+            color: #fff;
+        }
+
+        .sidebar .nav-item i { /* For icons, if you use them */
+            margin-right: 0.8rem;
+            font-size: 1.1rem;
+        }
+
+        .sidebar .submenu {
+            list-style: none;
+            padding-left: 2.5rem; /* Indent submenu items */
+            margin-top: 0.2rem;
+        }
+        .sidebar .submenu li a {
+            display: block;
+            padding: 0.5rem 0;
+            color: #bdc3c7; /* Slightly lighter text for submenu */
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .sidebar .submenu li a:hover {
+            color: #fff;
+        }
+
+        /* 3. Main Content Area */
+        .content-area {
+            flex-grow: 1; /* Takes up remaining horizontal space */
+            padding: 2rem;
+            display: grid;
+            gap: 2rem; /* Space between sections */
+            grid-template-columns: 1fr; /* Default to single column */
+            /* Add responsiveness with media queries for multi-column layouts */
+        }
+
+        /* Card Styling (Reused for many sections) */
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer, modern shadow */
+            padding: 1.5rem;
+            overflow: hidden; /* Important for inner elements that might overflow */
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #2ecc71; /* Green accent */
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-accent { /* For primary call to actions */
+            background-color: #3498db; /* Blue accent */
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px; /* Slightly more rounded */
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); /* Soft shadow */
+        }
+        .btn-accent:hover {
+            background-color: #2980b9;
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        /* My Leagues Specific CSS */
+        /* Container for the grid */
+        .leagues-grid {
+            display: grid;
+            /* Responsive grid: 2 columns on larger screens, 1 on smaller */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem; /* Space between cards */
+            padding: 1rem; /* Padding around the grid */
+        }
+
+        /* Individual League Card */
+        .league-card {
+            background-color: #ffffff;
+            border-radius: 12px; /* Soft rounded corners */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Modern, soft shadow */
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Pushes footer to bottom */
+            cursor: pointer; /* Indicates interactivity */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 1px solid #f0f0f0; /* Subtle border */
+        }
+
+        .league-card:hover {
+            transform: translateY(-5px); /* Slight lift on hover */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); /* Enhanced shadow on hover */
+        }
+
+        .league-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .league-card .league-name {
+            font-size: 1.5rem; /* Larger font for name */
+            font-weight: 700;
+            color: #2c3e50; /* Strong dark color */
+            margin: 0;
+        }
+
+        .league-card .card-body {
+            flex-grow: 1; /* Allows body to take available space */
+            margin-bottom: 1rem;
+        }
+
+        .league-card .draft-status {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #34495e; /* Slightly lighter than name */
+            margin-bottom: 0.5rem;
+        }
+
+        .league-card .draft-status .countdown {
+            font-weight: 700;
+            color: #e67e22; /* Accent color for countdown */
+        }
+
+        /* Styles for "Draft is starting!" */
+        .league-card .draft-status.live-draft {
+            color: #2ecc71; /* Vibrant green */
+            font-weight: 700;
+            animation: pulse-text 2s infinite; /* Subtle pulse animation */
+        }
+        .league-card .draft-status .live-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #e74c3c; /* Red dot for live */
+            border-radius: 50%;
+            margin-left: 5px;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        /* Keyframe animations */
+        @keyframes pulse-text {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.8); opacity: 0.7; }
+            50% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+
+
+        .league-card .draft-status.no-date {
+            color: #7f8c8d; /* Muted color for no date */
+            font-style: italic;
+            font-size: 0.95rem;
+        }
+
+        .league-card .group-size {
+            font-size: 0.9rem;
+            color: #7f8c8d; /* Light grey for less important info */
+            margin-top: 0.5rem;
+        }
+
+        .league-card .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem; /* Space above footer elements */
+        }
+
+        .league-card .league-code {
+            font-family: 'SF Mono', 'Consolas', monospace; /* Monospace for code */
+            font-size: 0.85rem;
+            background-color: #f5f5f5;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            color: #555;
+            user-select: all; /* Allows easy selection */
+        }
+
+        .league-card .copy-code-btn {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 0.5rem;
+            transition: color 0.2s ease;
+        }
+        .league-card .copy-code-btn:hover {
+            color: #3498db; /* Blue accent on hover */
+        }
+
+        .league-card .go-to-league {
+            /* Styles from dashboard btn-primary, perhaps slightly smaller */
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            margin-left: auto; /* Pushes button to the right */
+        }
+
+        /* Section header for My Leagues page */
+        .section-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Allow filters to wrap */
+        }
+        .section-header h2 {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-right: 1rem;
+        }
+        .section-header .filters {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 0.6rem 1rem;
+            outline: none;
+            font-size: 0.9rem;
+            flex-grow: 1; /* Allow search input to expand */
+            min-width: 180px;
+        }
+        .filter-btn {
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 20px;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #555;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background-color: #3498db; /* Blue accent for active filters */
+            color: white;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 200px;
+            }
+            .content-area {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+            .welcome-banner h2 {
+                font-size: 1.6rem;
+            }
+            .quick-stats {
+                gap: 1rem;
+            }
+            .stat-card {
+                min-width: 100px;
+                padding: 0.8rem 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1rem;
+            }
+            .navbar-actions {
+                margin-top: 1rem;
+                width: 100%;
+                justify-content: space-between;
+            }
+            .search-bar {
+                flex-grow: 1;
+                margin-right: 1rem;
+            }
+            .main-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            .sidebar nav ul {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .sidebar nav li {
+                margin-bottom: 0;
+            }
+            .sidebar .nav-item {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+                border-left: none; /* No side border on mobile */
+                border-bottom: 3px solid transparent; /* Bottom border for active */
+            }
+            .sidebar .nav-item.active {
+                border-left-color: transparent;
+                border-bottom-color: #2ecc71;
+            }
+            .sidebar .submenu {
+                display: none; /* Hide submenu on smaller screens or implement a toggle */
+            }
+            .content-area {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            .quick-stats {
+                flex-direction: column;
+                width: 100%;
+            }
+            .stat-card {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            .leagues-grid, .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .section-header .filters {
+                width: 100%;
+            }
+        }

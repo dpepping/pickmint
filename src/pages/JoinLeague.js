@@ -1,12 +1,13 @@
 import React, { useState} from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
+import './JoinLeague.css'
 
 
 const JoinLeague = () => {
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
-  const navigate = useNavigate(); // Initialize navigate
 
   const handleJoinLeague = async () => {
   try {
@@ -30,26 +31,36 @@ const JoinLeague = () => {
   }
 };
 
-
-  const handleBack = () => {
-    navigate('/home'); // Replace with '/' if that's your actual home route
-  };
-
   return (
-    <div>
-      <h2>Join a League</h2>
-      <input
-        type="text"
-        placeholder="League Code"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-      />
-      <button onClick={handleJoinLeague}>Join League</button>
-      {message && <p>{message}</p>}
 
-      {/* Back to Home button */}
-      <button onClick={handleBack} style={{ marginTop: '10px' }}>← Back to Home</button>
-    </div>
+  <div className="dashboard-container">
+      <Navbar />
+      <div className="main-layout">
+        <Sidebar />
+          <div>
+            <main class="content-area">
+                <div id='joinleaguediv'>
+                <section class="join-league-section">
+                    <h2>Join a League</h2>
+                    <p class="instruction-text">Enter the league code provided by your league commissioner to join an existing league.</p>
+
+                    <div class="join-form-card card">
+                        <div class="form-group">
+                            <label for="leagueCodeInput" class="form-label">League Code</label>
+                            <input type="text" id="leagueCodeInput" class="form-input" placeholder="e.g., ABC123XYZ"value={code} onChange={(e) => setCode(e.target.value)} autocomplete="off"/>
+                        </div>
+                        <button id="joinLeagueBtn" class="btn-accent" onClick={handleJoinLeague}>Join League</button>
+                        {message && <p>{message}</p>}
+                        <div id="messageArea" class="message-area">
+                            {/* <!-- Success or error messages will appear here --> */}
+                        </div>
+                    </div>
+                </section>
+                </div>
+                </main>
+          </div>
+        </div>
+      </div>
   );
 };
 

@@ -1,0 +1,215 @@
+        /* Buttons (Reused) */
+        .btn-primary {
+            background-color: #2ecc71;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-accent {
+            background-color: #3498db;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+        .btn-accent:hover {
+            background-color: #2980b9;
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Join League Specific Styles */
+        .join-league-section {
+            width: 100%; /* Take full width of content-area */
+            max-width: 600px; /* Max width for the section */
+            text-align: center; /* Center text within the section */
+            margin-top: 2rem; /* Add some space from the top */
+        }
+
+        .join-league-section h2 {
+            font-size: 2.2rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .instruction-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .join-form-card {
+            width: 100%;
+            max-width: 450px; /* Max width for the form card */
+            margin: 0 auto; /* Center the card */
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* Space between form elements */
+        }
+
+        .form-group {
+            text-align: left; /* Align label and input to the left within their group */
+        }
+
+        .form-label {
+            display: block; /* Make label take full width */
+            font-size: 1rem;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: #333;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input::placeholder {
+            color: #bbb;
+        }
+
+        .form-input:focus {
+            border-color: #3498db; /* Blue accent on focus */
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .message-area {
+            margin-top: 1rem;
+            padding: 0.8rem 1.2rem;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            text-align: center;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.3s ease;
+        }
+
+        .message-area.success {
+            background-color: #e6ffee; /* Light green */
+            color: #27ae60; /* Dark green text */
+            border: 1px solid #2ecc71;
+            opacity: 1;
+        }
+
+        .message-area.error {
+            background-color: #ffe6e6; /* Light red */
+            color: #c0392b; /* Dark red text */
+            border: 1px solid #e74c3c;
+            opacity: 1;
+        }
+
+        #joinleaguediv{
+            margin-left: 13.5rem;
+        }
+
+        /* Media Queries for Responsiveness (Copied from previous designs) */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 200px;
+            }
+            .content-area {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+            .join-league-section h2 {
+                font-size: 2rem;
+            }
+            .instruction-text {
+                font-size: 1rem;
+            }
+            .join-form-card {
+                padding: 2rem;
+            }
+            .form-input {
+                padding: 0.8rem 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1rem;
+            }
+            .navbar-actions {
+                margin-top: 1rem;
+                width: 100%;
+                justify-content: space-between;
+            }
+            .search-bar {
+                flex-grow: 1;
+                margin-right: 1rem;
+            }
+            .main-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            .sidebar nav ul {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .sidebar nav li {
+                margin-bottom: 0;
+            }
+            .sidebar .nav-item {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+            }
+            .sidebar .nav-item.active {
+                border-left-color: transparent;
+                border-bottom-color: #2ecc71;
+            }
+            .sidebar .submenu {
+                display: none;
+            }
+            .content-area {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            .join-league-section {
+                margin-top: 1rem;
+            }
+            .join-league-section h2 {
+                font-size: 1.8rem;
+            }
+            .instruction-text {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+            .join-form-card {
+                padding: 1.5rem;
+            }
+            .btn-accent {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+            }
+        }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import axios from 'axios';
-import './TeamDetails.css';  // reuse your existing styles
+import './TeamDetails.css';
 
 function TeamDetailsInLeague() {
   const { leagueCode, teamId } = useParams();
@@ -14,49 +14,50 @@ function TeamDetailsInLeague() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchTeamAndLeague = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
+        if (!token) throw new Error('Authentication token missing');
 
         // Fetch team details
-        const teamRes = await axios.get(`http://localhost:5000/api/team/${teamId}`, {
+        const teamResponse = await axios.get(`http://localhost:5000/api/team/${teamId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setTeam(teamRes.data);
 
-        // Fetch league details (optional if you want to show league info)
-        const leagueRes = await axios.get(`http://localhost:5000/api/league?code=${leagueCode}`, {
+        // Fetch league details
+        const leagueResponse = await axios.get(`http://localhost:5000/api/league?code=${leagueCode}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setLeague(leagueRes.data);
+
+        setTeam(teamResponse.data);
+        setLeague(leagueResponse.data);
+        setError('');
       } catch (err) {
-        console.error(err);
+        console.error('Failed to load team or league details:', err);
         setError('Failed to load team or league details.');
       }
     };
 
-    fetchTeamAndLeague();
+    fetchData();
   }, [teamId, leagueCode]);
 
   const handleRemoveFromLeague = async () => {
-    const confirmRemove = window.confirm(
-      `Are you sure you want to remove the team "${team?.name}" from league "${league?.name}"?`
-    );
-    if (!confirmRemove) return;
+    if (!window.confirm(`Are you sure you want to remove team "${team?.name}" from league "${league?.name}"?`)) {
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token');
-      // Assuming you have a DELETE or POST API to remove team from league:
       await axios.post(
         'http://localhost:5000/api/remove-team-from-league',
         { teamId, leagueCode },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert('Team removed from league successfully');
-      navigate(`/league/${leagueCode}`); // back to league details
+      alert('Team removed from league successfully.');
+      navigate(`/league/${leagueCode}`);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to remove team from league:', err);
       setMessage('Failed to remove team from league.');
     }
   };

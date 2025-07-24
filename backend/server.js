@@ -10,7 +10,7 @@ const router = express.Router();
 const User = require('./models/User');
 const League = require('./models/League');
 const Team = require('./models/Team');
-const Player = require('./models/Players');
+const Player = require('./models/Player');
 
 const soccerRoutes = require('./Soccer'); // Adjust path if needed
 
@@ -21,6 +21,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(soccerRoutes);
+const leagueDraftOrders = {};
+
 
 
 // Connect to MongoDB
@@ -117,7 +119,7 @@ app.post('/api/login', async (req, res) => {
 // Create League
 app.post('/api/league/create', authenticateToken, async (req, res) => {
   try {
-    const { name, code } = req.body;
+    const { name, code, groupSize } = req.body;
     const ownerEmail = req.user.email;
 
     if (!name || !code) {
@@ -132,6 +134,7 @@ app.post('/api/league/create', authenticateToken, async (req, res) => {
     const league = new League({
       code,
       name,
+      groupSize, // new field
       owner: ownerEmail,
       participants: [ownerEmail],
       teams: [],
@@ -157,48 +160,70 @@ app.post('/api/league/create', authenticateToken, async (req, res) => {
 app.get('/api/league', authenticateToken, async (req, res) => {
   try {
     const { code } = req.query;
-    if (!code) {
-      return res.status(400).json({ message: 'League code required' });
-    }
+    if (!code) return res.status(400).json({ message: 'League code is required' });
 
     const league = await League.findOne({ code });
     if (!league) return res.status(404).json({ message: 'League not found' });
 
-    const leagueTeams = await Team.find({ leagueCodes: code });
+    // For each team in league.teams, get full team with _id
+    const teamsWithId = await Promise.all(
+  league.teams.map(async (teamRef) => {
+    const fullTeam = await Team.findOne({ name: teamRef.name, ownerEmail: teamRef.owner });
+    
+    if (!fullTeam) {
+      console.warn(`⚠️ Team NOT found for name="${teamRef.name}", owner="${teamRef.owner}"`);
+    } else {
+      console.log(`✅ Found team "${fullTeam.name}" with ID: ${fullTeam._id}`);
+    }
 
-    const participantsDetailed = await Promise.all(
-      league.participants.map(async (email) => {
-        const user = await User.findOne({ username: email });
-        const userTeams = leagueTeams.filter(t => t.ownerEmail === email);
+    return {
+      _id: fullTeam ? fullTeam._id : null,
+      name: teamRef.name,
+      owner: teamRef.owner,
+      points: fullTeam ? fullTeam.points : 0,
+    };
+  })
+);
 
-        return {
-          email,
-          firstName: user?.firstName || '',
-          lastName: user?.lastName || '',
-          teams: userTeams.map(t => ({
-            _id: t._id,
-            name: t.name,
-            points: t.points
-          }))
-        };
-      })
-    );
+
+    // Get participants as before
+    const participants = [];
+
+for (const email of league.participants) {
+  const user = await User.findOne({ username: email });
+
+  if (user) {
+    // Find this user's teams based on fresh DB team list
+    const teamsInLeague = teamsWithId.filter(t => t.owner === user.username);
+
+    participants.push({
+      email: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      teams: teamsInLeague,
+    });
+  }
+}
+
 
     res.json({
       name: league.name,
-      code: league.code,
+      groupSize: league.groupSize,
+      groupType: league.groupType || 'Private',
+      groupPassword: league.groupPassword || '',
+      draftTime: league.draftTime || null,
       owner: league.owner,
-      groupSize: league.participants.length,
-      groupType: 'private',
-      groupPassword: null,
-      participants: participantsDetailed,
-      draftTime: league.draftTime || null,  // Add this line
+      participants,
+      teams: teamsWithId,
     });
   } catch (error) {
-    console.error('Get league error:', error);
+    console.error('Fetch league details error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+
 
 
 // Join League
@@ -220,6 +245,10 @@ app.post('/api/league/join', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'User already in league' });
     }
 
+    if (league.participants.length >= league.groupSize) {
+      return res.status(400).json({ message: 'League is already full' });
+    }
+
     league.participants.push(userEmail);
     await league.save();
 
@@ -238,16 +267,22 @@ app.post('/api/league/join', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all leagues (debug)
-app.get('/api/leagues', async (req, res) => {
+
+// Get all leagues user is in
+app.get('/api/leagues', authenticateToken, async (req, res) => {
   try {
-    const leagues = await League.find({});
+    const userEmail = req.user.email;
+
+    // Find leagues where user is a participant
+    const leagues = await League.find({ participants: userEmail });
+
     res.json(leagues);
   } catch (error) {
-    console.error('Get leagues error:', error);
+    console.error('Fetch leagues error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // Get user details by email (debug)
 app.get('/api/user/:email', authenticateToken, async (req, res) => {
@@ -390,25 +425,20 @@ app.get('/draft-page/:code',authenticateToken,async(req,res)=>{
 
 
 
-
-
-
-
-
-
-
-
-
-
 app.get('/api/team/:id', authenticateToken, async (req, res) => {
   try {
+    console.log('Fetching team id:', req.params.id); 
     const team = await Team.findById(req.params.id);
-    if (!team) return res.status(404).json({ message: 'Team not found' });
+
+    if (!team) {
+      console.log('Team not found for id:', req.params.id);
+      return res.status(404).json({ message: 'Team not found' });
+    }
 
     res.json({
       name: team.name,
       ownerEmail: team.ownerEmail,
-      leagueCodes: team.leagueCodes, // Return array of leagues
+      leagueCode: team.leagueCode,
       points: team.points,
     });
   } catch (err) {
@@ -418,44 +448,47 @@ app.get('/api/team/:id', authenticateToken, async (req, res) => {
 });
 
 
+
+
+
 app.post('/api/add-team-to-league', authenticateToken, async (req, res) => {
   try {
     const { teamId, leagueCode } = req.body;
 
-    console.log("Received leagueCode:", leagueCode);
-
     const team = await Team.findById(teamId);
     const league = await League.findOne({ code: leagueCode });
-
     if (!team || !league) {
       return res.status(404).json({ message: 'Team or League not found' });
     }
 
-    // Initialize leagueCodes if undefined
-    if (!Array.isArray(team.leagueCodes)) {
-      team.leagueCodes = [];
-    }
+    // Assign leagueCode directly (replace existing if any)
+    team.leagueCode = leagueCode;
+    await team.save();
 
-    // Prevent duplicates
-    const alreadyInTeam = team.leagueCodes.includes(leagueCode);
-
-    if (!alreadyInTeam) {
-      team.leagueCodes.push(leagueCode);
-      await team.save();
-    }
-
-    // Initialize league.teams if undefined
-    if (!Array.isArray(league.teams)) {
-      league.teams = [];
-    }
-
+    // Add team to league if not already present
+    if (!Array.isArray(league.teams)) league.teams = [];
     const alreadyInLeague = league.teams.some(
-      (t) => t.name === team.name && t.owner === team.ownerEmail
+      t => t.name === team.name && t.owner === team.ownerEmail
     );
-
     if (!alreadyInLeague) {
       league.teams.push({ name: team.name, owner: team.ownerEmail });
       await league.save();
+    }
+
+    // Update user's teams array with leagueCode
+    const user = await User.findOne({ username: team.ownerEmail });
+    if (user) {
+      const userTeam = user.teams.find(t => t.name === team.name);
+      if (userTeam) {
+        userTeam.leagueCode = leagueCode;
+      } else {
+        user.teams.push({
+          name: team.name,
+          points: team.points,
+          leagueCode: leagueCode,
+        });
+      }
+      await user.save();
     }
 
     res.json({ message: 'Team added to league successfully' });
@@ -512,26 +545,25 @@ app.delete('/api/league/:code', authenticateToken, async (req, res) => {
     // Delete the league document
     await League.deleteOne({ code });
 
-    // Remove this league from all users' leagues arrays
+    // Remove league from all users' leagues array (if you track them)
     await User.updateMany(
       { 'leagues.code': code },
       { $pull: { leagues: { code } } }
     );
 
-    // Remove this league from all teams' leagueCodes arrays
+    // Remove leagueCode from all teams assigned to this league
     await Team.updateMany(
-      { leagueCodes: code },
-      { $pull: { leagueCodes: code } }
+      { leagueCode: code },
+      { $unset: { leagueCode: "" } }
     );
 
-    // Also remove these teams from the league's teams array is automatic because league doc is deleted
-
-    res.json({ message: 'League deleted successfully' });
+    res.json({ message: 'League deleted and teams unlinked successfully' });
   } catch (err) {
     console.error('Delete league error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // Remove a team from a league
 app.post('/api/remove-team-from-league', authenticateToken, async (req, res) => {
@@ -547,15 +579,21 @@ app.post('/api/remove-team-from-league', authenticateToken, async (req, res) => 
     const league = await League.findOne({ code: leagueCode });
     if (!league) return res.status(404).json({ message: 'League not found' });
 
-    // Remove the leagueCode from the team's leagueCodes array
-    team.leagueCodes = team.leagueCodes.filter(code => code !== leagueCode);
-    await team.save();
+    // Clear leagueCode if matches
+    if (team.leagueCode === leagueCode) {
+      team.leagueCode = null;
+      await team.save();
+    }
 
-    // Remove the team from the league's teams array
+    // Remove from league's teams array
     league.teams = league.teams.filter(t => !(t.name === team.name && t.owner === team.ownerEmail));
     await league.save();
 
-    // Optional: update the user's teams array leagueCode field if stored there (not shown in your current schema)
+    // Update user's teams array
+    await User.updateOne(
+      { username: team.ownerEmail, 'teams._id': team._id },
+      { $set: { 'teams.$.leagueCode': null } }
+    );
 
     res.json({ message: 'Team removed from league successfully' });
   } catch (err) {
@@ -563,6 +601,7 @@ app.post('/api/remove-team-from-league', authenticateToken, async (req, res) => 
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 app.post('/api/league/:code/schedule-draft', authenticateToken, async (req, res) => {
   const { draftTime } = req.body;
@@ -596,44 +635,135 @@ router.get('/api/players', async (req, res) => {
 //const playerRoutes = require('./playerRoutes');
 //app.use(playerRoutes);
 
+// Assuming leagueDraftOrders is declared globally near the top of your server file:
+
+app.post('/api/league/:code/start-draft', authenticateToken, async (req, res) => {
+  try {
+    // Fetch teams directly, no need to populate league teams for this step
+    const teams = await Team.find({ leagueCode: req.params.code });
+    if (!teams || teams.length === 0) {
+      return res.status(400).json({ message: 'No teams found in league to draft' });
+    }
+
+    const teamIds = teams.map(t => t._id.toString());
+    const shuffled = teamIds.sort(() => 0.5 - Math.random());
+
+    // Atomically update league draft fields
+    const updatedLeague = await League.findOneAndUpdate(
+      { code: req.params.code },
+      {
+        draftOrder: shuffled,
+        currentPick: 0,
+        draftDirection: 'forward',
+        draftStarted: true
+      },
+      { new: true }
+    );
+
+    if (!updatedLeague) {
+      return res.status(404).json({ message: 'League not found' });
+    }
+
+    // Update in-memory draft order store
+    leagueDraftOrders[updatedLeague.code] = shuffled;
+
+    // Emit draft order to clients in the league room
+    const io = req.app.get('socketio');
+    io.to(updatedLeague.code).emit('draftOrderSet', { draftOrder: shuffled });
+
+    res.json({ message: 'Draft order set', draftOrder: shuffled });
+  } catch (err) {
+    console.error('Error starting draft:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+app.get('/api/league/:leagueCode/teams', authenticateToken, async (req, res) => {
+  try {
+    const { leagueCode } = req.params;
+
+    // Instead of fetching league and returning league.teams, query Teams collection directly:
+    const teams = await Team.find({ leagueCode });
+
+    if (!teams) {
+      return res.status(404).json({ message: 'No teams found for this league' });
+    }
+
+    res.json({ teams }); // Now teams have _id that match draftOrder
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.get('/api/league/:code/draft-order', authenticateToken, async (req, res) => {
+  try {
+    const league = await League.findOne({ code: req.params.code });
+    if (!league) return res.status(404).json({ message: 'League not found' });
+
+    res.json({
+      draftOrder: league.draftOrder || [],
+      currentPick: league.currentPick || 0,
+    });
+  } catch (err) {
+    console.error('Error getting draft order:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// routes/teamRoutes.js or wherever
+router.post('/teams/byIds', async (req, res) => {
+  const { teamIds } = req.body;
+
+  try {
+    const teams = await Team.find({ _id: { $in: teamIds } });
+    res.json({ teams });
+  } catch (err) {
+    console.error('Error fetching teams:', err);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
+
+
 
 //Creating players
 //Creating players
 app.post('/api/team/:teamId/draft-player', authenticateToken, async (req, res) => {
   try {
     console.log('Draft Player body:', req.body);
-    
 
     const ownerEmail = req.user.email;
     const { teamId } = req.params;
     const { name, PlayerID, leagueCode } = req.body;
 
-if (!PlayerID || !name || !leagueCode) {
-  return res.status(400).json({ message: 'PlayerID, name, and leagueCode required' });
-}
-
+    // Validate required fields
+    if (!PlayerID || !name || !leagueCode) {
+      return res.status(400).json({ message: 'PlayerID, name, and leagueCode required' });
+    }
 
     console.log('Received name:', name, '| PlayerID:', PlayerID);
 
-    if (!PlayerID || !name) {
-      console.log('⚠️ Missing required fields');
-      return res.status(400).json({ message: 'PlayerID and name required' });
-    }
-
+    // Fetch team and verify ownership and league association
     const team = await Team.findById(teamId);
     if (!team) return res.status(404).json({ message: 'Team not found' });
     if (team.ownerEmail !== ownerEmail) return res.status(403).json({ message: 'Not authorized' });
     if (team.leagueCode !== leagueCode) return res.status(400).json({ message: 'Team not in this league' });
 
+    // Fetch league
     const league = await League.findOne({ code: leagueCode });
     if (!league) return res.status(404).json({ message: 'League not found' });
 
+    // Find or create player
     let player = await Player.findOne({ PlayerID });
     if (!player) {
       player = new Player({ name, PlayerID });
       await player.save();
     }
 
+    // Check if player already drafted in this league
     const alreadyDraftedInLeague = league.playersDrafted.some(
       p => p.playerId.toString() === player._id.toString()
     );
@@ -656,9 +786,51 @@ if (!PlayerID || !name || !leagueCode) {
     });
     await league.save();
 
+    // Emit socket event to notify clients of the new drafted player
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to(leagueCode).emit('playerDrafted', {
+  playerId: player.PlayerID.toString(),
+  name: player.name,
+  leagueCode: leagueCode,
+  teamId: team._id.toString(),
+});
+      console.log(`🔔 Emitted playerDrafted event for player ${player.name} in league ${leagueCode}`);
+    } else {
+      console.warn('⚠️ Socket.io instance not found on app');
+    }
+
     res.json({ message: 'Player drafted successfully', player, team, league });
+
   } catch (error) {
     console.error('Draft player error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// In your backend server.js or routes file
+
+app.get('/api/league/:leagueCode/drafted-players', authenticateToken, async (req, res) => {
+  try {
+    const { leagueCode } = req.params;
+
+    const league = await League.findOne({ code: leagueCode }).populate('playersDrafted.playerId');
+
+    if (!league) {
+      return res.status(404).json({ message: 'League not found' });
+    }
+
+    console.log('playersDrafted:', league.playersDrafted);
+
+    // Safely handle playersDrafted possibly being undefined
+    const draftedPlayerIDs = (league.playersDrafted || [])
+      .map(dp => dp.playerId?.PlayerID)
+      .filter(Boolean);
+
+    res.json({ draftedPlayerIds: draftedPlayerIDs });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -668,8 +840,103 @@ if (!PlayerID || !name || !leagueCode) {
 
 
 
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, {
+  cors: { origin: '*' }  // Allow all origins for now, tighten later for production
+});
+
+app.set('socketio', io);  // Attach io instance so routes can use it
+
+// Optional: Listen for connections
+io.on('connection', (socket) => {
+  console.log('🟢 A user connected:', socket.id);
 
 
+socket.on('joinRoom', (leagueCode) => {
+  console.log(`🔗 Joining room: ${leagueCode}`);
+  socket.join(leagueCode);
+
+  // Immediately send the current draft order if it exists
+  const currentDraftOrder = leagueDraftOrders[leagueCode];
+  if (currentDraftOrder) {
+    console.log(`📤 Emitting draftOrderSet to room ${leagueCode}`, currentDraftOrder);
+    io.to(leagueCode).emit('draftOrderSet', { draftOrder: currentDraftOrder });
+  } else {
+    console.warn(`⚠️ No draft order found for league ${leagueCode}`);
+  }
+});
+
+
+  socket.on('disconnect', () => {
+    console.log('🔴 A user disconnected:', socket.id);
+  });
+});
+
+io.on('connection', (socket) => {
+  socket.on('makePick', async ({ leagueCode, playerId, playerName }) => {
+    try {
+      const league = await League.findOne({ code: leagueCode });
+      if (!league || !league.draftOrder) return;
+
+      const currentTeamId = league.draftOrder[league.currentPick];
+      const team = await Team.findById(currentTeamId);
+      if (!team) return;
+
+      // Add player to team
+      team.players.push({
+        playerId,
+        name: playerName,
+        draftedAt: new Date(),
+      });
+      await team.save();
+
+      // Save the drafted player in the league
+      league.playersDrafted.push({
+        playerId,
+        name: playerName,
+      });
+
+      // Advance draft pick logic...
+      let nextPick;
+      if (league.draftDirection === 'forward') {
+        if (league.currentPick + 1 >= league.draftOrder.length) {
+          league.draftDirection = 'backward';
+          nextPick = league.draftOrder.length - 1;
+        } else {
+          nextPick = league.currentPick + 1;
+        }
+      } else {
+        if (league.currentPick - 1 < 0) {
+          league.draftDirection = 'forward';
+          nextPick = 0;
+        } else {
+          nextPick = league.currentPick - 1;
+        }
+      }
+
+      league.currentPick = nextPick;
+      await league.save();
+
+      io.to(leagueCode).emit('playerDrafted', {
+        playerId,
+        name: playerName,
+        leagueCode,
+        teamId: team._id.toString(),
+        teamName: team.name,
+        currentPick: league.currentPick,
+        draftDirection: league.draftDirection,
+      });
+
+    } catch (err) {
+      console.error('Error making pick:', err);
+    }
+  });
+});
+
+
+
+
+// Existing route check stays the same
 app.get('/', (req, res) => {
   res.send('✅ PickMint backend is running!');
 });
@@ -678,8 +945,10 @@ app._router.stack
   .filter(r => r.route)
   .forEach(r => console.log(`✅ ${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`));
 
+// REPLACE THIS:
+// app.listen(PORT, () => { console.log(`Server is running on http://localhost:${PORT}`); });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// WITH THIS:
+http.listen(PORT, () => {
+  console.log(`🚀 Server + Socket.io running on http://localhost:${PORT}`);
 });

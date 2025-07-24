@@ -1,23 +1,45 @@
 const mongoose = require('mongoose');
 
 const leagueTeamSchema = new mongoose.Schema({
-  name: String,           // Team name
-  owner: String,          // owner's email
+  name: String,           
+  owner: String,          
 });
 
 const draftedPlayerSchema = new mongoose.Schema({
-  playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+  playerId: String,
   name: String,
 });
 
 const leagueSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
   name: { type: String, required: true },
-  owner: { type: String, required: true }, // email of league creator
-  participants: [String],                 // participant emails
+  owner: { type: String, required: true }, 
+  participants: [String],                 
   teams: [leagueTeamSchema],
-  playersDrafted: [draftedPlayerSchema],   // Track drafted players for THIS league
+  playersDrafted: [draftedPlayerSchema],   
   draftTime: { type: Date },
+  groupSize: { type: Number, required: true },
+
+  draftOrder: {
+    type: [String],    // array of team IDs (strings)
+    default: []
+  },
+
+  currentPick: {
+    type: Number,
+    default: 0
+  },
+
+  draftStarted: {
+    type: Boolean,
+    default: false
+  },
+
+  draftDirection: {
+    type: String,
+    default: 'forward'
+  },
 });
+
 
 module.exports = mongoose.model('League', leagueSchema);

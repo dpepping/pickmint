@@ -2,14 +2,13 @@ const mongoose = require('mongoose');
 
 const teamSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  ownerEmail: { type: String, required: true }, // User's email
-  leagueCode: { type: String, required: true }, // Which league this team belongs to
+  ownerEmail: { type: String, required: true },
+  leagueCode: { type: String, default: null }, // Optional league link
   points: { type: Number, default: 0 },
-
   players: [{
     playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
     name: String,
-    draftedAt: { type: Date, default: Date.now },
+    draftedAt: Date
   }]
 });
 

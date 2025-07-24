@@ -1,179 +1,429 @@
+/* Basic Reset & Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', sans-serif; /* Or your chosen font */
+    background-color: #f4f7f6; /* Light background for a modern feel */
+    color: #333;
+    line-height: 1.6;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.home-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  padding-top: 20px;
+/* 1. Top Navigation Bar */
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    z-index: 1000; /* Ensure it stays on top */
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 20px;
+.top-navbar .logo h1 {
+    font-size: 1.8rem;
+    color: #2c3e50; /* A dark, professional color */
 }
 
-.logout-button {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
 }
 
-.buttons-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 50px;
+.search-bar {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    background-color: #f9f9f9;
 }
 
-.big-button {
-  padding: 10px 20px;
-  font-size: 18px;
-  width: 200px;
+.search-bar input {
+    border: none;
+    padding: 0.5rem 1rem;
+    outline: none;
+    background: transparent;
 }
 
-.navigation-buttons {
-  display: flex;
-  gap: 15px;
-  margin-top: 30px;
+.search-bar button {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    color: #777;
 }
 
-
-/* Smaller navigation buttons */
-.nav-button {
-  padding: 12px 24px;
-  font-size: 16px;
-  width: 200px;
-  border-radius: 8px;
-  cursor: pointer;
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
 }
 
-.nav-button:hover {
-  background-color: #f0f0f0;
+.user-profile .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
 }
 
-.my-leagues-container {
-  padding: 20px;
-  text-align: center;
+.logout-btn { /* Style this as a subtle link or button */
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+.logout-btn:hover {
+    background-color: #f0f0f0;
 }
 
-.my-leagues-container ul {
-  list-style-type: none;
-  padding: 0;
+/* Main Layout */
+.main-layout {
+    display: flex;
+    flex: 1; /* Allows it to take remaining vertical space */
 }
 
-.my-leagues-container li {
-  font-size: 18px;
-  margin: 10px 0;
+/* 2. Sidebar Navigation */
+.sidebar {
+    width: 250px; /* Fixed width, or use percentage/flex-basis */
+    background-color: #2c3e50; /* Darker sidebar for contrast */
+    color: #ecf0f1; /* Light text for readability */
+    padding: 2rem 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
 }
 
-.my-leagues-container p {
-  font-size: 16px;
-  color: #888;
+.sidebar nav ul {
+    list-style: none;
 }
 
-.nav-button {
-  margin-top: 20px;
+.sidebar nav li {
+    margin-bottom: 0.5rem;
 }
 
-
-.home-container {
-  padding: 2rem;
-  position: relative;
+.sidebar .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.5rem;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 5px solid transparent; /* For active indicator */
 }
 
-.logout-button {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.sidebar .nav-item:hover,
+.sidebar .nav-item.active {
+    background-color: #34495e; /* Slightly lighter dark on hover/active */
+    border-left-color: #2ecc71; /* Accent color for active state */
+    color: #fff;
 }
 
-.main-split-container {
-  display: flex;
-  justify-content: space-between;
-  gap: 2rem; /* space between left and right */
-  margin-top: 3rem; /* spacing below logout */
+.sidebar .nav-item i { /* For icons, if you use them */
+    margin-right: 0.8rem;
+    font-size: 1.1rem;
 }
 
-.side-container {
-  flex: 1; /* each side takes equal width */
-  background: #fff;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.sidebar .submenu {
+    list-style: none;
+    padding-left: 2.5rem; /* Indent submenu items */
+    margin-top: 0.2rem;
+}
+.sidebar .submenu li a {
+    display: block;
+    padding: 0.5rem 0;
+    color: #bdc3c7; /* Slightly lighter text for submenu */
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+.sidebar .submenu li a:hover {
+    color: #fff;
 }
 
-.side-container h2 {
-  margin-bottom: 1.5rem;
+/* 3. Main Content Area */
+.content-area {
+    flex-grow: 1; /* Takes up remaining horizontal space */
+    padding: 2rem;
+    display: grid;
+    gap: 2rem; /* Space between sections */
+    grid-template-columns: 1fr; /* Default to single column */
+    /* Add responsiveness with media queries for multi-column layouts */
 }
 
-.big-button {
-  width: 100%;
-  margin-bottom: 1rem;
+/* Card Styling (Reused for many sections) */
+.card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer, modern shadow */
+    padding: 1.5rem;
+    overflow: hidden; /* Important for inner elements that might overflow */
 }
 
-.navigation-buttons {
-  margin-top: 3rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
+/* A. Welcome & Quick Stats Banner */
+.welcome-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.welcome-banner h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+.quick-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+.stat-card {
+    background-color: #e0f2f1; /* Light accent background */
+    padding: 1rem 1.2rem;
+    border-radius: 6px;
+    text-align: center;
+    min-width: 120px; /* Ensure a minimum width */
+}
+.stat-card span {
+    display: block;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.3rem;
+}
+.stat-card strong {
+    font-size: 1.5rem;
+    color: #2c3e50;
 }
 
-.bottom-buttons-container {
-  margin-top: 3rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+/* B. Today's Matches Widget */
+.today-matches h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+.no-matches {
+    text-align: center;
+    padding: 2rem;
+    color: #777;
+    font-style: italic;
+}
+.matches-list {
+    /* For multiple match cards, use flexbox or grid */
+}
+.match-card {
+    border: 1px solid #eee;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.match-card.live {
+    border-left: 4px solid #e74c3c; /* Red border for live */
+}
+.match-status .live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    margin-left: 5px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.7; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.7; }
 }
 
-.navigation-buttons {
-  margin-top: 1.5rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
+/* C. Your Active Leagues Section */
+.active-leagues h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+.leagues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+    gap: 1.5rem;
+}
+.league-card {
+    /* Uses .card styles */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 150px;
+}
+.league-card h4 {
+    margin-bottom: 0.5rem;
+    color: #34495e;
+}
+.league-card p {
+    font-size: 0.9rem;
+    color: #666;
+}
+.league-card strong {
+    color: #2c3e50;
 }
 
-.welcome-back-header {
-  text-align: center;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #333; /* adjust color if needed */
+/* D. Quick Actions/Call-to-Action Section */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.action-card {
+    /* Uses .card styles */
+    text-align: center;
+    padding: 2rem;
+}
+.action-card h4 {
+    font-size: 1.4rem;
+    margin-bottom: 0.8rem;
+    color: #2c3e50;
+}
+.action-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
 }
 
-.standings-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+/* Buttons */
+.btn-primary {
+    background-color: #2ecc71; /* Green accent */
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+.btn-primary:hover {
+    background-color: #27ae60;
 }
 
-.standings-table th, .standings-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
+.btn-accent { /* For primary call to actions */
+    background-color: #3498db; /* Blue accent */
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px; /* Slightly more rounded */
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); /* Soft shadow */
+}
+.btn-accent:hover {
+    background-color: #2980b9;
+    box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
 }
 
-.standings-table th {
-  background-color: #f4f4f4;
-  font-weight: bold;
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+/* Utility classes (for icons, etc.) - assuming you'd use an icon font or SVG */
+/* .icon-search, .icon-dashboard, etc. {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-size: contain;
+    background-repeat: no-repeat;
+    Replace with SVG or icon font code
+} */
+
+/* Media Queries for Responsiveness */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 200px;
+    }
+    .content-area {
+        padding: 1.5rem;
+        gap: 1.5rem;
+    }
+    .welcome-banner h2 {
+        font-size: 1.6rem;
+    }
+    .quick-stats {
+        gap: 1rem;
+    }
+    .stat-card {
+        min-width: 100px;
+        padding: 0.8rem 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+    .navbar-actions {
+        margin-top: 1rem;
+        width: 100%;
+        justify-content: space-between;
+    }
+    .search-bar {
+        flex-grow: 1;
+        margin-right: 1rem;
+    }
+    .main-layout {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .sidebar nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .sidebar nav li {
+        margin-bottom: 0;
+    }
+    .sidebar .nav-item {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        border-left: none; /* No side border on mobile */
+        border-bottom: 3px solid transparent; /* Bottom border for active */
+    }
+    .sidebar .nav-item.active {
+        border-left-color: transparent;
+        border-bottom-color: #2ecc71;
+    }
+    .sidebar .submenu {
+        display: none; /* Hide submenu on smaller screens or implement a toggle */
+    }
+    .content-area {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    .quick-stats {
+        flex-direction: column;
+        width: 100%;
+    }
+    .stat-card {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    .leagues-grid, .quick-actions {
+        grid-template-columns: 1fr;
+    }
 }

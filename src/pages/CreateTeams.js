@@ -13,18 +13,27 @@ function CreateTeam() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLeagues = async () => {
-      try {
-        //const response = await axios.get('https://pickmint-fb40314ffafe.herokuapp.com/api/leagues');
-        const response = await axios.get('http://localhost:5000/api/leagues');
-        setAvailableLeagues(response.data);
-      } catch (err) {
-        console.error('Failed to fetch leagues', err);
+  const fetchLeagues = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found');
+        return;
       }
-    };
 
-    fetchLeagues();
-  }, []);
+      const response = await axios.get('http://localhost:5000/api/leagues', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setAvailableLeagues(response.data);
+    } catch (err) {
+      console.error('Failed to fetch leagues', err);
+    }
+  };
+
+  fetchLeagues();
+}, []);
+
 
   const handleCreate = async () => {
   try {

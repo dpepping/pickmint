@@ -40,7 +40,7 @@ const Auth = () => {
         //const res = await axios.post('https://pickmint-fb40314ffafe.herokuapp.com/api/login', { email, password });
         const res = await axios.post('http://localhost:5000/api/login', { email, password });
         localStorage.setItem('token', res.data.token);
-        navigate('/home');
+        navigate('/index');
       }
     } catch (err) {
       setError(err.response?.data?.message || (isSignup ? 'Signup failed' : 'Login failed'));

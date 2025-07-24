@@ -167,11 +167,15 @@ function LeagueDetails() {
         </Button>
 
         <h1 className="league-title">{league.name}</h1>
-        <p className="league-info">Group Size: {league.size}</p>
-        <p className="league-info">Group Type: {league.type}</p>
-        {league.type === 'Private' && (
-          <p className="league-info">Password: {league.password}</p>
-        )}
+
+<p className="league-info">
+  Group Size: {league.participants.length} / {league.size}
+</p>
+
+<p className="league-info">
+  Password: {leagueCode}
+</p>
+
 
         <h2 className="participants-title">Participants</h2>
         {league.participants.length > 0 ? (

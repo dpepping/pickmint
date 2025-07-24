@@ -1,11 +1,14 @@
 import React, { useState} from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
+import './CreateLeague.css'
 
 const CreateLeague = () => {
   const [leagueName, setLeagueName] = useState('');
   const [code, setCode] = useState('');
-  const navigate = useNavigate();
+  const [groupSize, setGroupSize] = useState('');
+
 
 
   // Function to generate a 6-character alphanumeric league code
@@ -19,51 +22,66 @@ const CreateLeague = () => {
   };
 
   const handleCreateLeague = async () => {
-  const generatedCode = generateLeagueCode(); // Generate code here
-  const token = localStorage.getItem('token'); // Get token from localStorage
+  const generatedCode = generateLeagueCode();
+  const token = localStorage.getItem('token');
+
+  if (!leagueName || !groupSize) {
+    return alert('Please enter both league name and group size.');
+  }
 
   try {
     const { data } = await axios.post(
-      //'https://pickmint-fb40314ffafe.herokuapp.com/api/league/create',
       'http://localhost:5000/api/league/create',
       {
         name: leagueName,
-        code: generatedCode, // Send the generated code to the backend
+        code: generatedCode,
+        groupSize: parseInt(groupSize),  // Ensure it's a number
       },
       {
-        headers: {
-          Authorization: `Bearer ${token}`,  // Add the Bearer token here
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
-    setCode(generatedCode); // Show the code to the user
-    console.log(data); // You can log the data to see what the response contains
+    setCode(generatedCode);
+    console.log(data);
   } catch (error) {
     alert(error.response?.data?.message || 'Failed to create league');
   }
 };
 
-
-  const handleBack = () => {
-    navigate('/home');
-  };
-
   return (
+      <div className="dashboard-container">
+        <Navbar />
+        <div className="main-layout">
+          <Sidebar />
+          <main class="content-area">
+                <div id='joinleaguediv'>
+                <section class="join-league-section">
+                    <h2>Create a League</h2>
+                    <p class="instruction-text">Enter the league name and the maximum amount of people that can join the league.</p>
+
+                    <div class="join-form-card card">
+                        <div class="form-group">
+                            <label for="leagueCodeInput" class="form-label">League Name</label>
+                            <input type="text" placeholder="League Name" class="form-input" value={leagueName} onChange={(e) => setLeagueName(e.target.value)}/>
+                        </div>
+                        <div class="form-group">
+                            <label for="leagueCodeInput" class="form-label">Max Participants</label>
+                            <input type="number" placeholder="Max Group Size" class="form-input" value={groupSize} onChange={(e) => setGroupSize(e.target.value)} style={{ marginTop: '10px' }}/>
+                        </div>
+                        <button id="joinLeagueBtn" class="btn-accent" onClick={handleCreateLeague}>Create League</button>
+                              {code && (
+                              <p>Your league code: <strong>{code}</strong></p>
+                                )}
+                        <div id="messageArea" class="message-area">
+                            {/* <!-- Success or error messages will appear here --> */}
+                        </div>
+                    </div>
+                </section>
+                </div>
+                </main>
     <div>
-      <h2>Create a League</h2>
-      <input
-        type="text"
-        placeholder="League Name"
-        value={leagueName}
-        onChange={(e) => setLeagueName(e.target.value)}
-      />
-      <button onClick={handleCreateLeague}>Create League</button>
-
-      {code && (
-        <p>Your league code: <strong>{code}</strong></p>
-      )}
-
-      <button onClick={handleBack} style={{ marginTop: '10px' }}>← Back to Home</button>
+    </div>
+    </div>
     </div>
   );
 };

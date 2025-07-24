@@ -8,6 +8,7 @@ const leagueInfoSchema = new mongoose.Schema({
 const teamInfoSchema = new mongoose.Schema({
   name: String,
   points: Number,
+  leagueCode: { type: String, default: null },  // Add this field
 });
 
 const userSchema = new mongoose.Schema({

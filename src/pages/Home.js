@@ -61,6 +61,8 @@ function Home() {
 
 
   return (
+
+    
     <div className="home-container">
       <Button onClick={handleLogout} className="nav-button logout-button" variant="outline">
         Logout
@@ -79,7 +81,7 @@ function Home() {
             <Button onClick={handleMyTeam} className="big-button">My Teams</Button>
             <Button onClick={() => navigate('/join-league')} className="big-button">Join League</Button>
             <Button variant="outline" onClick={() => navigate('/create-league')} className="big-button">Create New League</Button>
-            <Button onClick={handleStandings} className="big-button">League Standings</Button>
+            <Button onClick={handleStandings} className="big-button">March Madness Bracket</Button>
           </div>
         </div>
 
