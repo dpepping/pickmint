@@ -2,7 +2,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Auth from './pages/Auth';  // Import the new Auth page
-import Index from './pages/index';
+import Dashboard from './pages/Dashboard';
+import AccountPage from './pages/AccountPage'
 import MyLeagues from './pages/MyLeagues';
 import MyTeam from './pages/MyTeam';
 import CreateLeague from './pages/CreateLeague';
@@ -26,7 +27,8 @@ function App() {
         {/* Authentication Route */}
         <Route path="/" element={<Auth />} />  {/* This is the new entry point for auth */}
         {/* Home page */}
-        <Route path="/index" element={<Index />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/account" element={<AccountPage/>} />
         <Route path="/my-leagues" element={<MyLeagues />} />
         <Route path="/my-team" element={<MyTeam />} />
         <Route path="/create-league" element={<CreateLeague />} />

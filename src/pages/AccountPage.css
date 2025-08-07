@@ -1,0 +1,11 @@
+.account-page {
+  padding: 2rem;
+}
+
+.account-details {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  max-width: 500px;
+}

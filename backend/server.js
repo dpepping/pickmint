@@ -62,6 +62,7 @@ function authenticateToken(req, res, next) {
 // ===== ROUTES =====
 
 // Signup
+// Signup
 app.post('/api/signup', async (req, res) => {
   try {
     const { firstName, lastName, gender, email, password } = req.body;
@@ -78,6 +79,9 @@ app.post('/api/signup', async (req, res) => {
 
     const newUser = new User({
       username: email,
+      firstName,
+      lastName,
+      gender,
       passwordHash,
       leagues: [],
       teams: [],
@@ -107,7 +111,16 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ email: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.username,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
     res.json({ token });
   } catch (error) {
@@ -115,6 +128,7 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // Create League
 app.post('/api/league/create', authenticateToken, async (req, res) => {
@@ -764,37 +778,49 @@ app.post('/api/team/:teamId/draft-player', authenticateToken, async (req, res) =
     }
 
     // Check if player already drafted in this league
-    const alreadyDraftedInLeague = league.playersDrafted.some(
-      p => p.playerId.toString() === player._id.toString()
-    );
-    if (alreadyDraftedInLeague) {
-      return res.status(400).json({ message: 'Player already drafted in this league' });
-    }
+    // Check if player already drafted in this league
+const alreadyDraftedInLeague = league.playersDrafted.some(
+  p => p.externalPlayerId === PlayerID.toString()
+);
+if (alreadyDraftedInLeague) {
+  return res.status(400).json({ message: 'Player already drafted in this league' });
+}
 
-    // Add player to user's team
-    team.players.push({
-      playerId: player._id,
-      name: player.name,
-      draftedAt: new Date(),
-    });
-    await team.save();
-
-    // Track player as drafted in the league
-    league.playersDrafted.push({
-      playerId: player._id,
-      name: player.name,
-    });
-    await league.save();
-
-    // Emit socket event to notify clients of the new drafted player
-    const io = req.app.get('socketio');
-    if (io) {
-      io.to(leagueCode).emit('playerDrafted', {
-  playerId: player.PlayerID.toString(),
+// Add player to user's team
+team.players.push({
+  playerId: player._id,
   name: player.name,
-  leagueCode: leagueCode,
-  teamId: team._id.toString(),
+  draftedAt: new Date(),
 });
+await team.save();
+
+// Track player as drafted in the league
+// Track player as drafted in the league
+league.playersDrafted.push({
+  externalPlayerId: PlayerID.toString(),
+  name: name
+});
+
+// Increment current pick
+const newIndex = (league.currentPick || 0) + 1;
+league.currentPick = newIndex;
+
+await league.save();
+
+
+// Emit socket event
+const io = req.app.get('socketio');
+if (io) {
+io.to(leagueCode).emit('playerDrafted', {
+  playerId: PlayerID.toString(),
+  name: player.name,
+  leagueCode,
+  currentPick: newIndex,
+  teamId: team._id.toString(),
+  teamName: team.name,
+});
+
+
       console.log(`🔔 Emitted playerDrafted event for player ${player.name} in league ${leagueCode}`);
     } else {
       console.warn('⚠️ Socket.io instance not found on app');
@@ -815,17 +841,14 @@ app.get('/api/league/:leagueCode/drafted-players', authenticateToken, async (req
   try {
     const { leagueCode } = req.params;
 
-    const league = await League.findOne({ code: leagueCode }).populate('playersDrafted.playerId');
+    const league = await League.findOne({ code: leagueCode });
 
     if (!league) {
       return res.status(404).json({ message: 'League not found' });
     }
 
-    console.log('playersDrafted:', league.playersDrafted);
-
-    // Safely handle playersDrafted possibly being undefined
     const draftedPlayerIDs = (league.playersDrafted || [])
-      .map(dp => dp.playerId?.PlayerID)
+      .map(dp => dp.externalPlayerId)
       .filter(Boolean);
 
     res.json({ draftedPlayerIds: draftedPlayerIDs });
@@ -836,6 +859,69 @@ app.get('/api/league/:leagueCode/drafted-players', authenticateToken, async (req
 });
 
 
+
+// --- Dashboard Data Route ---
+// Place this route in your server.js file, for example,
+// right after the '/api/users/me/teams' route or with other user-related GET routes.
+
+app.get('/api/users/dashboard-data', authenticateToken, async (req, res) => {
+    try {
+        // req.user.email is set by your authenticateToken middleware
+        const userEmail = req.user.email; 
+
+        // 1. Fetch User Data: Needed for the user's name
+        const user = await User.findOne({ username: userEmail });
+        if (!user) {
+            console.warn(`Dashboard: User ${userEmail} not found despite valid token.`);
+            return res.status(404).json({ message: 'User data not found for dashboard.' });
+        }
+
+        // 2. Fetch User's Active Leagues: For the "Your Active Leagues" section
+        // Find all leagues where the user is a participant
+        const userLeagues = await League.find({ participants: userEmail });
+
+        // Transform league data to match what the frontend's Dashboard component expects
+        // (id, name, rank, nextMatch).
+        // 'rank' and 'nextMatch' are placeholders for now, as they require more complex
+        // game logic and scheduling to be truly dynamic.
+        const activeLeaguesFrontend = userLeagues.map(league => ({
+            id: league._id,       // Use MongoDB's _id for React keys
+            name: league.name,
+            code: league.code,    // Include code for potential navigation
+            rank: Math.floor(Math.random() * 10) + 1, // Placeholder: Random rank for now
+            nextMatch: 'Date TBD' // Placeholder: You'll integrate real match dates later
+        }));
+
+        // 3. Calculate Quick Stats:
+        // Count teams owned by the user
+        const totalTeamsUserOwns = await Team.countDocuments({ ownerEmail: userEmail });
+        // Upcoming matches count is 0 for now, as you'd need a separate match scheduling system
+        const upcomingMatchesCount = 0; 
+
+        // 4. Today's Matches: This would be an array of match objects
+        // It's empty for now, as there's no match scheduling logic yet in your backend
+        const todayMatches = []; 
+
+        // --- Assemble the complete Dashboard response ---
+        const dashboardResponse = {
+            user: { name: user.firstName || user.username }, // Prefer firstName if you stored it, else username
+            stats: {
+                activeLeagues: activeLeaguesFrontend.length, // Total number of leagues this user is in
+                totalTeams: totalTeamsUserOwns,
+                upcomingMatches: upcomingMatchesCount
+            },
+            todayMatches: todayMatches,
+            activeLeagues: activeLeaguesFrontend
+        };
+
+        // Send the JSON response to the frontend
+        res.json(dashboardResponse);
+
+    } catch (error) {
+        console.error('❌ Error fetching dashboard data:', error);
+        res.status(500).json({ message: 'Internal server error while fetching dashboard data.' });
+    }
+});
 
 
 
@@ -851,18 +937,85 @@ app.set('socketio', io);  // Attach io instance so routes can use it
 io.on('connection', (socket) => {
   console.log('🟢 A user connected:', socket.id);
 
+  // ✅ Join a league room
+  socket.on('joinRoom', (leagueCode) => {
+    console.log(`🔗 Joining room: ${leagueCode}`);
+    socket.join(leagueCode);
 
-socket.on('joinRoom', (leagueCode) => {
-  console.log(`🔗 Joining room: ${leagueCode}`);
-  socket.join(leagueCode);
+    // Send current draft order if it exists
+    const currentDraftOrder = leagueDraftOrders[leagueCode];
+    if (currentDraftOrder) {
+      console.log(`📤 Emitting draftOrderSet to room ${leagueCode}`, currentDraftOrder);
+      io.to(leagueCode).emit('draftOrderSet', { draftOrder: currentDraftOrder });
+    } else {
+      console.warn(`⚠️ No draft order found for league ${leagueCode}`);
+    }
+  });
 
-  // Immediately send the current draft order if it exists
-  const currentDraftOrder = leagueDraftOrders[leagueCode];
-  if (currentDraftOrder) {
-    console.log(`📤 Emitting draftOrderSet to room ${leagueCode}`, currentDraftOrder);
-    io.to(leagueCode).emit('draftOrderSet', { draftOrder: currentDraftOrder });
-  } else {
-    console.warn(`⚠️ No draft order found for league ${leagueCode}`);
+  // ✅ Handle a pick being made
+  socket.on('makePick', async ({ leagueCode, playerId, playerName, teamId }) => {
+  try {
+    const league = await League.findOne({ code: leagueCode });
+    if (!league || !league.draftOrder) return;
+
+    const currentTeamId = league.draftOrder[league.currentPick];
+    
+    // ❌ Not your turn
+    if (currentTeamId.toString() !== teamId) {
+      console.warn(`⛔️ Team ${teamId} tried to pick out of turn. Current pick: ${currentTeamId}`);
+      return;
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) return;
+
+    // ✅ Proceed with adding player, saving league, etc.
+    team.players.push({
+      playerId,
+      name: playerName,
+      draftedAt: new Date(),
+    });
+    await team.save();
+
+    league.playersDrafted.push({
+      playerId: null,
+      externalPlayerId: playerId.toString(),
+      name: playerName,
+    });
+
+    // Advance pick logic...
+    let nextPick;
+    if (league.draftDirection === 'forward') {
+      if (league.currentPick + 1 >= league.draftOrder.length) {
+        league.draftDirection = 'backward';
+        nextPick = league.draftOrder.length - 1;
+      } else {
+        nextPick = league.currentPick + 1;
+      }
+    } else {
+      if (league.currentPick - 1 < 0) {
+        league.draftDirection = 'forward';
+        nextPick = 0;
+      } else {
+        nextPick = league.currentPick - 1;
+      }
+    }
+
+    league.currentPick = nextPick;
+    await league.save();
+
+    io.to(leagueCode).emit('playerDrafted', {
+      playerId,
+      name: playerName,
+      leagueCode,
+      teamId: team._id.toString(),
+      teamName: team.name,
+      currentPick: league.currentPick,
+      draftDirection: league.draftDirection,
+    });
+
+  } catch (err) {
+    console.error('Error making pick:', err);
   }
 });
 
@@ -872,66 +1025,8 @@ socket.on('joinRoom', (leagueCode) => {
   });
 });
 
-io.on('connection', (socket) => {
-  socket.on('makePick', async ({ leagueCode, playerId, playerName }) => {
-    try {
-      const league = await League.findOne({ code: leagueCode });
-      if (!league || !league.draftOrder) return;
 
-      const currentTeamId = league.draftOrder[league.currentPick];
-      const team = await Team.findById(currentTeamId);
-      if (!team) return;
 
-      // Add player to team
-      team.players.push({
-        playerId,
-        name: playerName,
-        draftedAt: new Date(),
-      });
-      await team.save();
-
-      // Save the drafted player in the league
-      league.playersDrafted.push({
-        playerId,
-        name: playerName,
-      });
-
-      // Advance draft pick logic...
-      let nextPick;
-      if (league.draftDirection === 'forward') {
-        if (league.currentPick + 1 >= league.draftOrder.length) {
-          league.draftDirection = 'backward';
-          nextPick = league.draftOrder.length - 1;
-        } else {
-          nextPick = league.currentPick + 1;
-        }
-      } else {
-        if (league.currentPick - 1 < 0) {
-          league.draftDirection = 'forward';
-          nextPick = 0;
-        } else {
-          nextPick = league.currentPick - 1;
-        }
-      }
-
-      league.currentPick = nextPick;
-      await league.save();
-
-      io.to(leagueCode).emit('playerDrafted', {
-        playerId,
-        name: playerName,
-        leagueCode,
-        teamId: team._id.toString(),
-        teamName: team.name,
-        currentPick: league.currentPick,
-        draftDirection: league.draftDirection,
-      });
-
-    } catch (err) {
-      console.error('Error making pick:', err);
-    }
-  });
-});
 
 
 

@@ -6,7 +6,7 @@ const teamSchema = new mongoose.Schema({
   leagueCode: { type: String, default: null }, // Optional league link
   points: { type: Number, default: 0 },
   players: [{
-    playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },
+    playerId: String,
     name: String,
     draftedAt: Date
   }]

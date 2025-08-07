@@ -1,7 +1,7 @@
 // src/pages/DraftPage.js
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
 import io from 'socket.io-client';
 import './DraftPage.css';
 
@@ -11,6 +11,8 @@ function DraftPage() {
   const { leagueCode: paramLeagueCode } = useParams();
 
   const [teamsWithPlayers, setTeamsWithPlayers] = useState({});
+  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const navigate = useNavigate();
   const [topPlayers, setTopPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,8 +24,10 @@ function DraftPage() {
   const [draftOrder, setDraftOrder] = useState([]);
   const [currentPickIndex, setCurrentPickIndex] = useState(0);
   const [allLeagueTeams, setAllLeagueTeams] = useState([]);
+  const [draftHistory, setDraftHistory] = useState([]); 
+  const [pickHistory, setPickHistory] = useState([]); // ⬅️ NEW
   const ROSTER_SLOTS = [
-  'PG', 'SG', 'SF', 'PF', 'C',       // Starting 5
+  'G', 'G', 'F', 'F', 'C',       // Starting 5
   'FLEX1', 'FLEX2', 'FLEX3',         // 3 flex
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4', 'BENCH5', 'BENCH6'  // Bench 6
 ];
@@ -45,6 +49,13 @@ for (let round = 0; round < totalRounds; round++) {
   // Use leagueCode from URL param as initial activeLeagueCode
   const [activeLeagueCode, setActiveLeagueCode] = useState(paramLeagueCode || null);
 
+  const myTeam = userTeams.find(team => team.leagueCode === activeLeagueCode);
+
+useEffect(() => {
+  if (myTeam?._id) {
+    setSelectedTeamId(myTeam._id);
+  }
+}, [myTeam]);
   // Listen for real-time player draft updates
     useEffect(() => {
   function onPlayerDrafted({ playerId, name, leagueCode, teamId }) {
@@ -69,6 +80,8 @@ for (let round = 0; round < totalRounds; round++) {
       const emptySlot = ROSTER_SLOTS.find(slot => !teamRoster[slot]);
       if (!emptySlot) return prev;
 
+      
+
       return {
         ...prev,
         [teamId]: {
@@ -77,6 +90,7 @@ for (let round = 0; round < totalRounds; round++) {
         }
       };
     });
+
   }
 
   
@@ -107,6 +121,7 @@ for (let round = 0; round < totalRounds; round++) {
 
 
 
+
   // Fetch user teams on mount
   useEffect(() => {
     async function fetchUserTeams() {
@@ -133,6 +148,7 @@ for (let round = 0; round < totalRounds; round++) {
 
     
   }, []);
+  
 
   // Set activeLeagueCode based on userTeams only if not set by URL param
   useEffect(() => {
@@ -213,7 +229,7 @@ for (let round = 0; round < totalRounds; round++) {
         const sortedTop10 = data
           .filter(p => p.FantasyPoints != null)
           .sort((a, b) => b.FantasyPoints - a.FantasyPoints)
-          .slice(0, 10)
+          .slice(0, 100)
           .map(p => ({
             name: p.Name,
             PlayerID: p.PlayerID,
@@ -241,15 +257,32 @@ for (let round = 0; round < totalRounds; round++) {
     fetchData();
   }, []);
 
+useEffect(() => {
+  if (socket && activeLeagueCode) {
+    socket.emit('joinRoom', activeLeagueCode);  // 🔁 match backend name
+    console.log(`🔗 Joined socket room for league ${activeLeagueCode}`);
+  }
+}, [socket, activeLeagueCode]);
+
+
+
   useEffect(() => {
   function handlePlayerDrafted({ playerId, name, leagueCode, teamId, teamName, currentPick, draftDirection }) {
     if (!leagueCode || leagueCode !== activeLeagueCode) return;
+    
 
     // ✅ Update the drafted players
     setDraftedPlayersByLeague(prev => ({
       ...prev,
       [leagueCode]: [...(prev[leagueCode] || []), playerId.toString()]
     }));
+
+setPickHistory(prev => [
+  ...prev,
+  { teamId, playerName: name }
+]);
+
+
 
     // ✅ Show announcement
     setRecentlyPickedPlayer(`${teamName || 'A team'} selected ${name}`);
@@ -268,6 +301,10 @@ for (let round = 0; round < totalRounds; round++) {
       const teamRoster = prev[teamId] || {};
       const emptySlot = ROSTER_SLOTS.find(slot => !teamRoster[slot]);
       if (!emptySlot) return prev;
+      setDraftHistory(prev => [
+  { teamName: teamName || getTeamNameById(teamId), playerName: name },
+  ...prev
+]);
 
       return {
         ...prev,
@@ -276,6 +313,7 @@ for (let round = 0; round < totalRounds; round++) {
           [emptySlot]: { playerId, name }
         }
       };
+      
     });
   }
 
@@ -285,6 +323,8 @@ for (let round = 0; round < totalRounds; round++) {
     socket.off('playerDrafted', handlePlayerDrafted);
   };
 }, [activeLeagueCode]);
+
+
 
 
   useEffect(() => {
@@ -426,13 +466,24 @@ useEffect(() => {
       setSuccessMsg(`Player "${name}" drafted successfully!`);
 
       // Emit socket event for real-time updates
+
+
+  if (!myTeam) {
+  alert("Your team couldn't be found in this league.");
+  return;
+}
+
+const currentTeamId = fullDraftOrder[currentPickIndex];
+if (myTeam._id !== currentTeamId) {
+  alert("⛔ It's not your turn to draft.");
+  return;
+}
 socket.emit('makePick', {
-  leagueCode: league,
+  leagueCode: activeLeagueCode,
   playerId: PlayerID.toString(),
   playerName: name,
+  teamId: myTeam._id,
 });
-
-
 
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
@@ -471,65 +522,102 @@ console.log("✅ FILTERED DRAFT TEAMS:", draftTeams);
   if (loading) return <p className="loading">Loading player stats...</p>;
   if (error) return <p className="error">{error}</p>;
 
+  
+
   const draftedIdsForLeague = draftedPlayersByLeague[activeLeagueCode] || [];
   console.log('📦 DRAFT ORDER:', draftOrder);
 
   
+console.log('Drafted player IDs:', draftedIdsForLeague);
+console.log('Top players IDs:', topPlayers.map(p => p.PlayerID.toString()));
 
 
 
   return (
-    <div className="container">
-      <h1>🏀 Players by Fantasy Points</h1>
+  <div className="container">
+    {/* Draft Header */}
+    <div className="draft-header flex justify-between items-center px-6 py-4 bg-white shadow-md">
+      <h1 className="text-2xl font-bold text-blue-600">Draft Page</h1>
+      <button className="exit-button" onClick={() => navigate('/my-leagues')}>
+        Exit Draft
+      </button>
+    </div>
 
-{fullDraftOrder.length > 0 && allLeagueTeams.length > 0 && (
-  <div className="draft-order-scroll-container">
-    {fullDraftOrder.map((teamId, index) => {
-      let label;
-      if (index === currentPickIndex) label = 'On the Clock';
-      else if (index === currentPickIndex + 1) label = 'Next Up';
-      else label = `Pick ${index + 1}`;
+    {/* Draft Order Status */}
+    {fullDraftOrder.length > 0 && allLeagueTeams.length > 0 && (
+      <div className="draft-order-scroll-container">
+  {fullDraftOrder.map((teamId, index) => {
+    const pick = pickHistory[index];
+    const teamName = getTeamNameById(teamId);
 
-      return (
-        <div
-          key={`${teamId}-${index}`}
-          className={`draft-status-box ${
-            index === currentPickIndex ? 'on-clock highlight' :
-            index === currentPickIndex + 1 ? 'next-up' : ''
-          }`}
-        >
-          <p>{label}:</p>
-          <p>{getTeamNameById(teamId)}</p>
-        </div>
-      );
-    })}
-  </div>
-)}
+    let label;
+    let boxClass = 'draft-status-box';
 
+    if (pick) {
+      // ✅ Past pick
+      label = `${getTeamNameById(pick.teamId)} drafted ${pick.playerName}`;
+      boxClass += ' picked';
+    } else if (index === currentPickIndex) {
+      // ✅ Current pick
+      label = 'On the Clock';
+      boxClass += ' on-clock highlight';
+    } else if (index === currentPickIndex + 1) {
+      // ✅ Next up
+      label = 'Next Up';
+      boxClass += ' next-up';
+    } else {
+      // ✅ Future pick
+      label = `Pick ${index + 1}`;
+    }
 
+    return (
+      <div key={`${teamId}-${index}`} className={boxClass}>
+        <p>{label}</p>
+        {!pick && label !== 'On the Clock' && <p>{teamName}</p>}
+      </div>
+    );
+  })}
+</div>
 
+    )}
 
+    {/* Picked & Error Messages */}
+    {recentlyPickedPlayer && <div className="picked-alert">{recentlyPickedPlayer}</div>}
+    {successMsg && <p className="success-message">{successMsg}</p>}
+    {error && <p className="error-message">{error}</p>}
 
+    {/* Top Player List */}
+    <ol className="top-player-list">
+      {topPlayers
+        .filter((p) => !draftedIdsForLeague.includes(p.PlayerID.toString()))
+        .map((p, i) => {
+          const currentTeamId = fullDraftOrder[currentPickIndex];
+          const isMyTurn = myTeam?._id === currentTeamId;
+          const alreadyPicked = draftedIdsForLeague.includes(p.PlayerID.toString());
 
-
-
-      {recentlyPickedPlayer && (
-        <div className="picked-alert">{recentlyPickedPlayer}</div>
-      )}
-      {successMsg && <p className="success-message">{successMsg}</p>}
-      {error && <p className="error-message">{error}</p>}
-
-      <ol className="top-player-list">
-        {topPlayers
-          .filter(p => !draftedIdsForLeague.includes(p.PlayerID.toString()))
-          .map((p, i) => (
+          return (
             <li key={i} className="top-player-item">
               {p.name} ({p.position}) — {p.team}
               <button
-                disabled={creatingPlayerId === p.PlayerID}
-                onClick={() => createPlayer(p.name, p.PlayerID)}
+                disabled={creatingPlayerId === p.PlayerID || !isMyTurn || alreadyPicked}
+                onClick={() => {
+                  if (!isMyTurn) {
+                    alert("⛔ It's not your turn to draft.");
+                    return;
+                  }
+                  createPlayer(p.name, p.PlayerID);
+                }}
+                className={`draft-button ${
+                  alreadyPicked ? 'picked' : !isMyTurn ? 'waiting' : 'active'
+                }`}
               >
-                {creatingPlayerId === p.PlayerID ? 'Drafting...' : 'Draft Player'}
+                {alreadyPicked
+                  ? 'Picked'
+                  : creatingPlayerId === p.PlayerID
+                  ? 'Drafting...'
+                  : isMyTurn
+                  ? 'Draft Player'
+                  : 'Waiting...'}
               </button>
 
               <div className="player-stats">
@@ -543,32 +631,69 @@ console.log("✅ FILTERED DRAFT TEAMS:", draftTeams);
                 <span>PlayerID: {p.PlayerID}</span>
               </div>
             </li>
+          );
+        })}
+    </ol>
+
+    {/* Draft Board + Roster View */}
+    <div className="draft-page-container">
+      {/* Left Sidebar: Roster */}
+      <div className="roster-sidebar">
+        <h2 className="roster-title">Team Roster</h2>
+        <select
+          className="team-selector"
+          value={selectedTeamId}
+          onChange={(e) => setSelectedTeamId(e.target.value)}
+        >
+          {draftTeams.map((team) => (
+            <option key={team._id} value={team._id}>
+              {team.name}
+            </option>
           ))}
-      </ol>
-      <div className="draft-board-horizontal">
-  {draftTeams.map(team => (
-    <div key={team._id} className="draft-board-column">
-      <h4 className="team-header">{team.name}</h4>
-      {ROSTER_SLOTS.map(slot => {
-        const player = teamRosters[team._id]?.[slot];
-        return (
-          <div key={slot} className="draft-box">
-            <div className="slot-label">{slot}</div>
-            {player ? (
-              <div className="player-name">{player.name}</div>
-            ) : (
-              <div className="empty-slot">Empty</div>
-            )}
-          </div>
-        );
-      })}
+        </select>
+
+        {/* Show only selected team's roster */}
+        <ul className="roster-list">
+          {selectedTeamId &&
+            Object.values(teamRosters[selectedTeamId] || {})
+              .filter((player) => player && player.name)
+              .map((player, index) => (
+                <li key={index} className="roster-player">
+                  {player.name} — {player.position}
+                </li>
+              ))}
+        </ul>
+      </div>
+
+      {/* Center: Draft Board */}
+      <div className="draft-board-area">
+        <div className="draft-board-horizontal">
+          {draftTeams.map((team) => (
+            <div key={team._id} className="draft-board-column">
+              <h4 className="team-header">{team.name}</h4>
+              {ROSTER_SLOTS.map((slot) => {
+                const player = teamRosters[team._id]?.[slot];
+                return (
+                  <div key={slot} className="draft-box">
+                    <div className="slot-label">{slot}</div>
+                    {player ? (
+                      <div className="player-name">{player.name}</div>
+                    ) : (
+                      <div className="empty-slot">Empty</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  ))}
-</div>
+  </div>
+);
 
 
-    </div>
-  );
+
 }
 
 export default DraftPage;

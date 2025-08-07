@@ -1,22 +1,24 @@
 const mongoose = require('mongoose');
 
 const leagueTeamSchema = new mongoose.Schema({
-  name: String,           
-  owner: String,          
+  name: String,
+  owner: String,
 });
 
 const draftedPlayerSchema = new mongoose.Schema({
-  playerId: String,
+  playerId: String,        // internal MongoDB ID (optional)
+  externalPlayerId: String,  // <-- the Sportsdata API PlayerID (8-digit string)
   name: String,
 });
+
 
 const leagueSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   owner: { type: String, required: true }, 
-  participants: [String],                 
+  participants: [String],
   teams: [leagueTeamSchema],
-  playersDrafted: [draftedPlayerSchema],   
+  playersDrafted: [draftedPlayerSchema],   // updated drafted players schema
   draftTime: { type: Date },
   groupSize: { type: Number, required: true },
 
@@ -40,6 +42,5 @@ const leagueSchema = new mongoose.Schema({
     default: 'forward'
   },
 });
-
 
 module.exports = mongoose.model('League', leagueSchema);

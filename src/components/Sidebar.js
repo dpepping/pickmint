@@ -6,7 +6,7 @@ function Sidebar(){
           <nav>
             <ul>
               <li>
-                <a href="/index"className="nav-item active">
+                <a href="/dashboard"className="nav-item active">
                   <i className="icon-dashboard"></i> Dashboard
                 </a>
               </li>

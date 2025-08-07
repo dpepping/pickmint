@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import axios from 'axios';
 import './LeagueDetails.css';
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 function LeagueDetails() {
   const { leagueCode } = useParams();
@@ -127,6 +129,11 @@ function LeagueDetails() {
   if (!league) return <div className="league-container"><p>Loading...</p></div>;
 
   return (
+
+        <div className="dashboard-container">
+      <Navbar/>
+      <div className="main-layout">
+        <Sidebar/>
     <div className="league-container">
       <div className="league-box">
 
@@ -163,7 +170,7 @@ function LeagueDetails() {
         )}
 
         <Button onClick={() => navigate('/my-leagues')} className="back-btn">
-          ← Back to My Groups
+          ← Back to My Leagues
         </Button>
 
         <h1 className="league-title">{league.name}</h1>
@@ -253,6 +260,8 @@ function LeagueDetails() {
           </Button>
         )}
       </div>
+    </div>
+          </div>
     </div>
   );
 }

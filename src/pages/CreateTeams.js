@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Button from '../components/ui/Button';
 import './CreateTeams.css';
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 function CreateTeam() {
   const [teamName, setTeamName] = useState('');
@@ -68,6 +70,12 @@ function CreateTeam() {
 
   //'https://pickmint-fb40314ffafe.herokuapp.com/api/create-team',
   return (
+
+        <div className="dashboard-container">
+      <Navbar/>
+      <div className="main-layout">
+        <Sidebar/>
+
     <div className="create-team-container">
       <h1>Create a Team</h1>
       {error && <p className="error-message">{error}</p>}
@@ -97,6 +105,8 @@ function CreateTeam() {
         <Button onClick={handleCreate}>Create</Button>
         <Button onClick={() => navigate('/my-team')}>Back</Button>
       </div>
+    </div>
+          </div>
     </div>
   );
 }

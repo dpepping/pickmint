@@ -12,10 +12,14 @@ const teamInfoSchema = new mongoose.Schema({
 });
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true }, // email used as username
+  username: { type: String, required: true, unique: true }, // email as username
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  gender: { type: String, enum: ['Male', 'Female'], required: true },
   passwordHash: { type: String, required: true },
   leagues: [leagueInfoSchema],
   teams: [teamInfoSchema],
 });
+
 
 module.exports = mongoose.model('User', userSchema);

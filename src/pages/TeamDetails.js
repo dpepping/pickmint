@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import axios from 'axios';
 import './TeamDetails.css';
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
+
 
 const TeamDetails = () => {
   const { id } = useParams();
@@ -130,6 +133,10 @@ console.log('leagueCode:', res.data.leagueCode);
   }
 
   return (
+          <div className="dashboard-container">
+        <Navbar/>
+        <div className="main-layout">
+          <Sidebar/>
     <div className="team-details-container">
       <div className="team-box">
         <Button onClick={() => navigate('/my-team')} className="back-btn">
@@ -164,13 +171,15 @@ console.log('leagueCode:', res.data.leagueCode);
         </div>
 
         <div className="delete-team-section">
-  <h3>Danger Zone</h3>
+  <h3>Delete Team</h3>
   <Button onClick={handleDeleteTeam} className="delete-btn">Delete Team</Button>
 </div>
 
 
         {message && <p className="success-message">{message}</p>}
       </div>
+    </div>
+          </div>
     </div>
   );
 };
